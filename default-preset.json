@@ -1,0 +1,9 @@
+{
+  'audio-player:period': 0.05,
+  'audio-player:duration': 0.2,
+  'overdrive:gain': 1,
+  'feedback-delay:preGain': 0,
+  'feedback-delay:delayTime': 0.1,
+  'feedback-delay:feedback': 0.5,
+  'feedback-delay:filterFrequency': 12000,
+}

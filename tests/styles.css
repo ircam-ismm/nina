@@ -1,0 +1,45 @@
+:root {
+
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  min-height: 100vh;
+  background-color: var(--sc-color-primary-1);
+  color: white;
+}
+
+html {
+  font-size: 62.5%;
+  line-height: 1.4rem;
+}
+
+body {
+  margin: 0;
+  font-family: Consolas, monaco, monospace;
+  padding: 20px;
+}
+
+/* resume audio context button */
+button {
+  background-color: var(--sc-color-primary-1);
+  color: white;
+}
+
+h3 {
+  font-size: 18px;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid var(--sc-color-primary-3);
+}
+
+hr {
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  height: 4px;
+}
+
