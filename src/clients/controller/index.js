@@ -129,7 +129,7 @@ async function main($container) {
       return html`
         <div class="col">
           <h2># Players</h2>
-          ${players.map(player => {
+          ${repeat(players, player => player.id, player => {
             return html`
               <div style="margin-bottom: 4px;">
                 <sc-text style="width: 100px;">player ${player.get('id')}</sc-text>
