@@ -2,3 +2,7 @@ node_modules
 .build
 
 .DS_Store
+audio-files
+!audio-files/drum-loop.wav
+
+default-preset.json
