@@ -98,6 +98,8 @@ async function main($container) {
 
   const alphabet = 'ABCDEFGHIJLKMNOPQRSTUVWXYZ';
 
+
+
   const audioControls = {
     render() {
       return html`
@@ -106,7 +108,7 @@ async function main($container) {
           <sc-transport
             style="height: 50px;"
             .buttons=${['play', 'stop']}
-            value=${players.get('audio-player:control')[0] === 'play' ? 'start' : 'stop'}
+            .value=${players.get('audio-player:control')[0] === 'start' ? 'play' : 'stop'}
             @change=${e => {
               const value = e.detail.value === 'play' ? 'start' : 'stop';
               players.set({ 'audio-player:control': value })
@@ -131,7 +133,7 @@ async function main($container) {
           <h2># Players</h2>
           ${repeat(players, player => player.id, player => {
             return html`
-              <div style="margin-bottom: 4px;">
+              <div style="padding: 16px 0; border-bottom: 1px solid white;">
                 <sc-text style="width: 100px;">player ${player.get('id')}</sc-text>
                 <sc-select
                   style="width: 120px;"
@@ -151,6 +153,21 @@ async function main($container) {
                 <sc-toggle
                   @change=${e => player.set({ probe: !player.get('probe') })}
                 ></sc-toggle>
+                <hr />
+                <sc-transport
+                  .buttons=${['play', 'stop']}
+                  .value=${player.get('audio-player:control') === 'start' ? 'play' : 'stop'}
+                  @change=${e => {
+                    const value = e.detail.value === 'play' ? 'start' : 'stop';
+                    player.set({ 'audio-player:control': value })
+                  }}
+                ></sc-transport>
+                <sc-slider
+                  min="0"
+                  max="2"
+                  value=${player.get('mix:gain')}
+                  @input=${e => player.set({ 'mix:gain': e.detail.value })}
+                ></sc-slider>
               </div>
             `
           })}

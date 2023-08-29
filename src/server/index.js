@@ -59,7 +59,10 @@ assignNamespaced(playerSchema, GranularAudioPlayer.params, 'audio-player');
 assignNamespaced(playerSchema, AudioBus.params, 'input-bus');
 assignNamespaced(playerSchema, Overdrive.params, 'overdrive');
 assignNamespaced(playerSchema, FeedbackDelay.params, 'feedback-delay');
+assignNamespaced(playerSchema, AudioBus.params, 'mix');
 assignNamespaced(playerSchema, AudioBus.params, 'master');
+
+console.log(playerSchema);
 
 for (let name in preset) {
   playerSchema[name].default = preset[name];

@@ -86,12 +86,15 @@ async function main($container) {
   const master = new AudioBus(audioContext);
   master.connect(audioContext.destination);
 
+  const mix = new AudioBus(audioContext);
+  mix.connect(master.input);
+
   const feedbackDelay = new FeedbackDelay(audioContext);
-  feedbackDelay.connect(master.input);
+  feedbackDelay.connect(mix.input);
 
   const overdrive = new Overdrive(audioContext);
   overdrive.connect(feedbackDelay.input);
-  overdrive.connect(master.input);
+  overdrive.connect(mix.input);
 
   const inputBus = new AudioBus(audioContext);
   inputBus.connect(overdrive.input);
@@ -117,6 +120,7 @@ async function main($container) {
   bindStateUpdatesToAudioNode(player, 'input-bus', inputBus);
   bindStateUpdatesToAudioNode(player, 'overdrive', overdrive);
   bindStateUpdatesToAudioNode(player, 'feedback-delay', feedbackDelay);
+  bindStateUpdatesToAudioNode(player, 'mix', mix);
   bindStateUpdatesToAudioNode(player, 'master', master);
 
   const view = {
