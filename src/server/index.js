@@ -11,6 +11,7 @@ import { loadConfig } from '../utils/load-config.js';
 import '../utils/catch-unhandled-errors.js';
 
 import playerSchema from './schemas/player.js';
+import globalSchema from './schemas/global.js';
 
 import AudioBus from '../clients/audio/AudioBus.js';
 import FeedbackDelay from '../clients/audio/FeedbackDelay.js';
@@ -35,6 +36,9 @@ console.log(`
 const presetPath = path.join(process.cwd(), 'default-preset.json');
 const preset = JSON5.parse(fs.readFileSync(presetPath));
 
+const labelsPath = path.join(process.cwd(), 'labels.json');
+const labels = JSON5.parse(fs.readFileSync(labelsPath));
+
 /**
  * Create the soundworks server
  */
@@ -47,6 +51,10 @@ server.pluginManager.register('filesystem', filesystemPlugin, {
   dirname: 'audio-files',
   publicPath: 'audio',
 });
+
+
+server.stateManager.registerSchema('global', globalSchema);
+const global = await server.stateManager.create('global', { labels });
 
 // extend player schema with audio controls
 function assignNamespaced(target, src, namespace) {
@@ -61,9 +69,9 @@ assignNamespaced(playerSchema, Overdrive.params, 'overdrive');
 assignNamespaced(playerSchema, FeedbackDelay.params, 'feedback-delay');
 assignNamespaced(playerSchema, AudioBus.params, 'mix');
 assignNamespaced(playerSchema, AudioBus.params, 'master');
+// console.log(playerSchema);
 
-console.log(playerSchema);
-
+// use defaults defined in presets
 for (let name in preset) {
   playerSchema[name].default = preset[name];
 }

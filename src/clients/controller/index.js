@@ -2,7 +2,7 @@ import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
 import filesystemPlugin from '@soundworks/plugin-filesystem/client.js';
 import launcher from '@soundworks/helpers/launcher.js';
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
 import createLayout from './layout.js';
@@ -21,13 +21,18 @@ import '@ircam/sc-components';
 
 const config = window.SOUNDWORKS_CONFIG;
 
-// state is actaully a collection, but that's ok
+// state is actually a collection, but that's ok
 function createInterfaceAndBindStateNamespaced(params, state, namespace) {
   return html`
     <div>
       <h3>${namespace}</h3>
       ${Object.keys(params).map(paramName => {
         const param = params[paramName];
+
+        if (param.type !== 'boolean' && param.type !== 'float' && param.type !== 'integer') {
+          return nothing;
+        }
+
         const stateKey = `${namespace}:${paramName}`
 
         const title = html`<sc-text>${paramName}</sc-text>`;
@@ -91,14 +96,12 @@ async function main($container) {
   const filesystem = await client.pluginManager.get('filesystem');
   filesystem.onUpdate(() => $layout.requestUpdate());
 
+  const global = await client.stateManager.attach('global');
+
   const players = await client.stateManager.getCollection('player');
   players.onAttach(() => $layout.requestUpdate());
   players.onDetach(() => $layout.requestUpdate());
   players.onUpdate(() => $layout.requestUpdate());
-
-  const alphabet = 'ABCDEFGHIJLKMNOPQRSTUVWXYZ';
-
-
 
   const audioControls = {
     render() {
@@ -137,7 +140,7 @@ async function main($container) {
                 <sc-text style="width: 100px;">player ${player.get('id')}</sc-text>
                 <sc-select
                   style="width: 120px;"
-                  .options=${alphabet.split('')}
+                  .options=${global.get('labels')}
                   placeholder="select label"
                   value=${player.get('label')}
                   @change=${e => player.set({ label: e.detail.value })}
