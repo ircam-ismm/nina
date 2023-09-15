@@ -3,4 +3,21 @@ export default {
     type: 'any',
     default: [],
   },
+  reset: {
+    type: 'boolean',
+    event: true,
+  },
+  introFile: {
+    type: 'string',
+    default: '',
+  },
+  introPlayingState: {
+    type: 'string',
+    default: 'stop',
+  },
+  introPlayingStartTime: {
+    type: 'float',
+    default: null,
+    nullable: true,
+  },
 };

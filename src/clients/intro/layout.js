@@ -50,11 +50,13 @@ class SimpleLayout extends LitElement {
 
   render() {
     return html`
-      ${Array.from(this._components).map(comp => comp.render ? comp.render() : comp)}
+      <div>
+        ${Array.from(this._components).map(comp => comp.render ? comp.render() : comp)}
 
-      <!-- credits -->
-      ${this._showCredits ? html`<sw-credits .client="${this.client}"></sw-credits>` : nothing}
-      <sw-infos-button @click="${this.toggleCredits}"></sw-infos-button>
+        <!-- credits -->
+        ${this._showCredits ? html`<sw-credits .client="${this.client}"></sw-credits>` : nothing}
+        <sw-infos-button @click="${this.toggleCredits}"></sw-infos-button>
+      </div>
     `;
   }
 }

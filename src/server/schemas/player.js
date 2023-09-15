@@ -9,10 +9,14 @@ export default {
     default: null,
     nullable: true,
   },
-  soundfiles: {
-    type: 'any',
+  hostname: {
+    type: 'string',
     default: null,
     nullable: true,
+  },
+  kill: {
+    type: 'boolean',
+    event: true,
   },
   soundfile: {
     type: 'string',
@@ -20,10 +24,6 @@ export default {
     nullable: true,
   },
   loaded: {
-    type: 'boolean',
-    default: false,
-  },
-  probe: {
     type: 'boolean',
     default: false,
   },

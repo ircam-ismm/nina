@@ -17,12 +17,6 @@ class GranularAudioPlayer {
       max: 1,
       default: 0.1,
     },
-    position: {
-      type: 'float',
-      min: 0,
-      max: 9999,
-      default: 0,
-    },
   };
 
   constructor(context, scheduler, {

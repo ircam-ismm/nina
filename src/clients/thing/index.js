@@ -1,35 +1,28 @@
+import os from 'node:os';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+
 import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
 import launcher from '@soundworks/helpers/launcher.js';
-import platformInitPlugin from '@soundworks/plugin-platform-init/client.js';
 import { Scheduler } from '@ircam/sc-scheduling';
-import { html } from 'lit';
-import { AudioBufferLoader } from 'waves-loaders';
+import { AudioContext } from 'node-web-audio-api';
 
+import { loadConfig } from '../../utils/load-config.js';
+import createLayout from './layout.js';
 import AudioBus from '../audio/AudioBus.js';
 import FeedbackDelay from '../audio/FeedbackDelay.js';
-import Overdrive from '../audio/Overdrive.js';
 import GranularAudioPlayer from '../audio/GranularAudioPlayer.js';
+import NodeBufferLoader from '../audio/NodeBufferLoader.js';
 
-import createLayout from './layout.js';
-
-// import Waveshaper from '../audio/Waveshaper.js';
 
 // - General documentation: https://soundworks.dev/
 // - API documentation:     https://soundworks.dev/api
 // - Issue Tracker:         https://github.com/collective-soundworks/soundworks/issues
 // - Wizard & Tools:        `npx soundworks`
 
-/**
- * Grab the configuration object written by the server in the `index.html`
- */
-const config = window.SOUNDWORKS_CONFIG;
-
-/**
- * If multiple clients are emulated you might to want to share some resources
- */
 const audioContext = new AudioContext();
-const audioBufferLoader = new AudioBufferLoader();
+const audioBufferLoader = new NodeBufferLoader(audioContext);
 const scheduler = new Scheduler(() => audioContext.currentTime);
 
 // helper function
@@ -49,7 +42,7 @@ function bindStateUpdatesToAudioNode(state, namespace, node) {
             break;
           case 'float':
           case 'integer':
-            if (node[key].constructor && node[key].constructor.name === 'AudioParam') {
+            if (node[key].setTargetAtTime) { // AudioNode interfaces
               node[key].setTargetAtTime(value, node.context.currentTime, 0.01);
             } else {
               node[key] = value;
@@ -64,24 +57,36 @@ function bindStateUpdatesToAudioNode(state, namespace, node) {
   }, true);
 }
 
-async function main($container) {
-  /**
-   * Create the soundworks client
-   */
+async function bootstrap() {
+  const config = loadConfig(process.env.ENV, import.meta.url);
   const client = new Client(config);
 
-  client.pluginManager.register('platform-init', platformInitPlugin, { audioContext });
+  launcher.register(client);
 
-  launcher.register(client, { initScreensContainer: $container });
-
-  /**
-   * Launch application
-   */
   await client.start();
 
-  const $layout = createLayout(client, $container);
   // shared states
   const player = await client.stateManager.create('player', { id: client.id });
+  const global = await client.stateManager.attach('global');
+
+  // set player label according to hostname
+  const labels = global.get('labels');
+  const hostname = os.hostname();
+
+  if (hostname in labels) {
+    const label = labels[hostname];
+    player.set({ label, hostname });
+  } else {
+    // DEV mode
+    const hostnames = Object.keys(labels);
+    const index = client.id % hostnames.length;
+    const hostname = hostnames[index];
+    const label = labels[hostname];
+
+    player.set({ label, hostname });
+    console.log(`> DEV mode - hostname: ${hostname} - label: ${label}`);
+  }
+
   // audio chain
   const master = new AudioBus(audioContext);
   master.connect(audioContext.destination);
@@ -92,57 +97,37 @@ async function main($container) {
   const feedbackDelay = new FeedbackDelay(audioContext);
   feedbackDelay.connect(mix.input);
 
-  const overdrive = new Overdrive(audioContext);
-  overdrive.connect(feedbackDelay.input);
-  overdrive.connect(mix.input);
-
-  const inputBus = new AudioBus(audioContext);
-  inputBus.connect(overdrive.input);
-
   const audioPlayer = new GranularAudioPlayer(audioContext, scheduler);
-  audioPlayer.connect(inputBus.input);
+  audioPlayer.connect(feedbackDelay.input);
+  audioPlayer.connect(mix.input);
 
   player.onUpdate(async updates => {
     if ('soundfile' in updates) {
       player.set({ loaded: false });
 
-      const pathname = updates.soundfile;
-      const buffer = await audioBufferLoader.load(pathname);
-      audioPlayer.buffer = buffer;
+      const url = `http://${config.env.serverAddress}:${config.env.port}${updates.soundfile}`
+      audioPlayer.buffer = await audioBufferLoader.load(url);
 
       player.set({ loaded: true });
     }
 
-    $layout.requestUpdate();
+    if ('kill' in updates) {
+      process.exit(1);
+    }
   });
 
   bindStateUpdatesToAudioNode(player, 'audio-player', audioPlayer);
-  bindStateUpdatesToAudioNode(player, 'input-bus', inputBus);
-  bindStateUpdatesToAudioNode(player, 'overdrive', overdrive);
-  bindStateUpdatesToAudioNode(player, 'feedback-delay', feedbackDelay);
   bindStateUpdatesToAudioNode(player, 'mix', mix);
-  bindStateUpdatesToAudioNode(player, 'master', master);
 
-  const view = {
-    render() {
-      return html`
-        <div class="${player.get('probe') ? 'probe' : ''}">
-          <p>id: ${player.get('id')}</p>
-          <p>label: ${player.get('label')}</p>
-          <p>soundfile: ${player.get('soundfile')}</p>
-        </div>
-      `;
-    }
-  }
-
-  $layout.addComponent(view);
-
-
+  bindStateUpdatesToAudioNode(global, 'audio-player', audioPlayer);
+  bindStateUpdatesToAudioNode(global, 'feedback-delay', feedbackDelay);
+  bindStateUpdatesToAudioNode(global, 'master', master);
 }
 
-// The launcher enables instanciation of multiple clients in the same page to
-// facilitate development and testing.
-// e.g. `http://127.0.0.1:8000?emulate=10` to run 10 clients side-by-side
-launcher.execute(main, {
-  numClients: parseInt(new URLSearchParams(window.location.search).get('emulate')) || 1,
+// The launcher allows to fork multiple clients in the same terminal window
+// by defining the `EMULATE` env process variable
+// e.g. `EMULATE=10 npm run watch-process thing` to run 10 clients side-by-side
+launcher.execute(bootstrap, {
+  numClients: process.env.EMULATE ? parseInt(process.env.EMULATE) : 1,
+  moduleURL: import.meta.url,
 });

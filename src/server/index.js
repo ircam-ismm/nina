@@ -6,6 +6,7 @@ import '@soundworks/helpers/polyfills.js';
 import { Server } from '@soundworks/core/server.js';
 import filesystemPlugin from '@soundworks/plugin-filesystem/server.js';
 import platformInitPlugin from '@soundworks/plugin-platform-init/server.js';
+import syncPlugin from '@soundworks/plugin-sync/server.js';
 
 import { loadConfig } from '../utils/load-config.js';
 import '../utils/catch-unhandled-errors.js';
@@ -33,11 +34,8 @@ console.log(`
 `);
 
 // load preset file
-const presetPath = path.join(process.cwd(), 'default-preset.json');
-const preset = JSON5.parse(fs.readFileSync(presetPath));
-
-const labelsPath = path.join(process.cwd(), 'labels.json');
-const labels = JSON5.parse(fs.readFileSync(labelsPath));
+const configPath = path.join(process.cwd(), 'config.json');
+const { presets, labels, introFile } = JSON5.parse(fs.readFileSync(configPath));
 
 /**
  * Create the soundworks server
@@ -49,12 +47,9 @@ server.useDefaultApplicationTemplate();
 server.pluginManager.register('platform-init', platformInitPlugin);
 server.pluginManager.register('filesystem', filesystemPlugin, {
   dirname: 'audio-files',
-  publicPath: 'audio',
+  publicPath: 'audio-files',
 });
-
-
-server.stateManager.registerSchema('global', globalSchema);
-const global = await server.stateManager.create('global', { labels });
+server.pluginManager.register('sync', syncPlugin);
 
 // extend player schema with audio controls
 function assignNamespaced(target, src, namespace) {
@@ -63,41 +58,58 @@ function assignNamespaced(target, src, namespace) {
   }
 }
 
-assignNamespaced(playerSchema, GranularAudioPlayer.params, 'audio-player');
-assignNamespaced(playerSchema, AudioBus.params, 'input-bus');
-assignNamespaced(playerSchema, Overdrive.params, 'overdrive');
-assignNamespaced(playerSchema, FeedbackDelay.params, 'feedback-delay');
+// extend player schema
 assignNamespaced(playerSchema, AudioBus.params, 'mix');
-assignNamespaced(playerSchema, AudioBus.params, 'master');
-// console.log(playerSchema);
+playerSchema['audio-player:control'] = Object.assign({}, GranularAudioPlayer.params.control);
+
+// extend global schema
+assignNamespaced(globalSchema, GranularAudioPlayer.params, 'audio-player');
+assignNamespaced(globalSchema, FeedbackDelay.params, 'feedback-delay');
+assignNamespaced(globalSchema, AudioBus.params, 'master');
 
 // use defaults defined in presets
-for (let name in preset) {
-  playerSchema[name].default = preset[name];
+for (let name in presets) {
+  if (playerSchema[name]) {
+    playerSchema[name].default = presets[name];
+  }
+
+  if (globalSchema[name]) {
+    globalSchema[name].default = presets[name];
+  }
 }
-
-server.stateManager.registerSchema('player', playerSchema);
-
-// const players = await server.stateManager.getCollection('players');
-
-  // 'audio-player:control': { type: 'enum', list: [ 'start', 'stop' ], default: 'stop' },
-  // 'audio-player:period': { type: 'float', min: 0.01, max: 1, default: 0.02 },
-  // 'audio-player:duration': { type: 'float', min: 0.01, max: 1, default: 0.1 },
-  // 'audio-player:position': { type: 'float', min: 0, max: 9999, default: 0 },
-  // 'input-bus:mute': { type: 'boolean', default: false },
-  // 'input-bus:gain': { type: 'float', min: 0, max: 2, default: 1 },
-  // 'overdrive:gain': { type: 'float', min: 0.1, max: 250, default: 1 },
-  // 'feedback-delay:preGain': { type: 'float', min: 0, max: 1, default: 0.8 },
-  // 'feedback-delay:delayTime': { type: 'float', min: 0, max: 1, default: 0.1 },
-  // 'feedback-delay:feedback': { type: 'float', min: 0, max: 1, default: 0.8 },
-  // 'feedback-delay:filterFrequency': { type: 'integer', min: 0, max: 20000, default: 12000 },
-  // 'master:mute': { type: 'boolean', default: false },
-  // 'master:gain': { type: 'float', min: 0, max: 2, default: 1 }
 
 /**
  * Launch application (init plugins, http server, etc.)
  */
 await server.start();
 
-// and do your own stuff!
+server.stateManager.registerSchema('global', globalSchema);
+const global = await server.stateManager.create('global', { labels, introFile });
 
+server.stateManager.registerSchema('player', playerSchema);
+const players = await server.stateManager.getCollection('player');
+
+// florward start stop to players state
+global.onUpdate(updates => {
+  if ('audio-player:control' in updates) {
+    const value = updates['audio-player:control'];
+    players.set({ 'audio-player:control': value });
+  }
+
+  if ('reset' in updates) {
+    global.set(presets);
+  }
+});
+
+const sync = await server.pluginManager.get('sync');
+
+server.stateManager.registerUpdateHook('global', updates => {
+  if ('introPlayingState' in updates) {
+    const now = sync.getSyncTime();
+
+    return {
+      introPlayingStartTime: now + 1,
+      ...updates,
+    };
+  }
+});

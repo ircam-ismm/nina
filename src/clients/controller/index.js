@@ -35,25 +35,15 @@ function createInterfaceAndBindStateNamespaced(params, state, namespace) {
 
         const stateKey = `${namespace}:${paramName}`
 
-        const title = html`<sc-text>${paramName}</sc-text>`;
+        const title = html`<sc-text style="width: 120px;">${paramName}</sc-text>`;
         const sep = html`<hr>`;
         let control;
 
         switch (param.type) {
-          // case 'enum': {
-          //   control = html`
-          //     <sc-tab
-          //       .options=${param.list}
-          //       value=${state.get(stateKey)[0]}
-          //       @change=${e => state.set({ [stateKey]: e.detail.value })}
-          //     ></sc-tab>
-          //   `
-          //   break;
-          // }
           case 'boolean': {
             control = html`
               <sc-toggle
-                ?active=${state.get(stateKey)[0]}
+                ?active=${state.get(stateKey)}
                 @change=${e => state.set({ [stateKey]: e.detail.value })}
               ></sc-toggle>
             `
@@ -65,7 +55,7 @@ function createInterfaceAndBindStateNamespaced(params, state, namespace) {
               <sc-slider
                 min=${param.min}
                 max=${param.max}
-                value=${state.get(stateKey)[0]}
+                value=${state.get(stateKey)}
                 number-box
                 @input=${e => state.set({ [stateKey]: e.detail.value })}
               ></sc-slider>
@@ -76,7 +66,7 @@ function createInterfaceAndBindStateNamespaced(params, state, namespace) {
 
         return [title, control, sep];
       })}
-  `
+  `;
 }
 
 async function main($container) {
@@ -97,32 +87,49 @@ async function main($container) {
   filesystem.onUpdate(() => $layout.requestUpdate());
 
   const global = await client.stateManager.attach('global');
+  global.onUpdate(() => $layout.requestUpdate());
 
   const players = await client.stateManager.getCollection('player');
   players.onAttach(() => $layout.requestUpdate());
   players.onDetach(() => $layout.requestUpdate());
   players.onUpdate(() => $layout.requestUpdate());
 
+  const intro = {
+    render() {
+      return html`
+        <div style="position: absolute; right: 2px; top: 40px;">
+          <sc-text>${global.get('introFile')}</sc-text>
+          <sc-transport value=${global.get('introPlayingState')} buttons=${JSON.stringify(['play', 'stop'])}
+            @change=${e => global.set({ introPlayingState: e.detail.value })}
+          ></sc-transport>
+        </div>
+      `;
+    }
+  }
+
   const audioControls = {
     render() {
       return html`
-        <div class="col">
+        <div class="col-1">
           <h2># controls</h2>
+          <div style="margin-bottom: 10px;">
+            <sc-button
+              @input=${e => global.set({ reset: true })}
+            >Reset</sc-button>
+          </div>
           <sc-transport
             style="height: 50px;"
             .buttons=${['play', 'stop']}
-            .value=${players.get('audio-player:control')[0] === 'start' ? 'play' : 'stop'}
+            .value=${global.get('audio-player:control') === 'start' ? 'play' : 'stop'}
             @change=${e => {
               const value = e.detail.value === 'play' ? 'start' : 'stop';
-              players.set({ 'audio-player:control': value })
+              global.set({ 'audio-player:control': value })
             }}
           ></sc-transport>
 
-          ${createInterfaceAndBindStateNamespaced(GranularAudioPlayer.params, players, 'audio-player')}
-          ${createInterfaceAndBindStateNamespaced(AudioBus.params, players, 'input-bus')}
-          ${createInterfaceAndBindStateNamespaced(Overdrive.params, players, 'overdrive')}
-          ${createInterfaceAndBindStateNamespaced(FeedbackDelay.params, players, 'feedback-delay')}
-          ${createInterfaceAndBindStateNamespaced(AudioBus.params, players, 'master')}
+          ${createInterfaceAndBindStateNamespaced(GranularAudioPlayer.params, global, 'audio-player')}
+          ${createInterfaceAndBindStateNamespaced(FeedbackDelay.params, global, 'feedback-delay')}
+          ${createInterfaceAndBindStateNamespaced(AudioBus.params, global, 'master')}
         </div>
       `;
     }
@@ -130,55 +137,65 @@ async function main($container) {
 
   const playersView = {
     render() {
-      // @todo - replace with iterator when fixed
+      const labels = global.get('labels');
+
       return html`
-        <div class="col">
+        <div class="col-2">
           <h2># Players</h2>
-          ${repeat(players, player => player.id, player => {
-            return html`
-              <div style="padding: 16px 0; border-bottom: 1px solid white;">
-                <sc-text style="width: 100px;">player ${player.get('id')}</sc-text>
-                <sc-select
-                  style="width: 120px;"
-                  .options=${global.get('labels')}
-                  placeholder="select label"
-                  value=${player.get('label')}
-                  @change=${e => player.set({ label: e.detail.value })}
-                ></sc-select>
-                <sc-select
-                  style="width: 180px;"
-                  .options=${filesystem.getTreeAsUrlMap('', true)}
-                  placeholder="select sound file"
-                  value=${player.get('soundfile')}
-                  @change=${e => player.set({ soundfile: e.detail.value })}
-                ></sc-select>
-                <sc-status ?active=${player.get('loaded')}></sc-status>
-                <sc-toggle
-                  @change=${e => player.set({ probe: !player.get('probe') })}
-                ></sc-toggle>
-                <hr />
-                <sc-transport
-                  .buttons=${['play', 'stop']}
-                  .value=${player.get('audio-player:control') === 'start' ? 'play' : 'stop'}
-                  @change=${e => {
-                    const value = e.detail.value === 'play' ? 'start' : 'stop';
-                    player.set({ 'audio-player:control': value })
-                  }}
-                ></sc-transport>
-                <sc-slider
-                  min="0"
-                  max="2"
-                  value=${player.get('mix:gain')}
-                  @input=${e => player.set({ 'mix:gain': e.detail.value })}
-                ></sc-slider>
-              </div>
-            `
+          ${repeat(Object.entries(labels), ([hostname, label]) => hostname, ([hostname, label]) => {
+            const player = players.find(p => p.get('hostname') === hostname);
+            const title = html`<sc-text style="width: 100px;">${label} (${hostname})</sc-text>`
+
+            if (player) {
+              return html`
+                <div style="padding: 16px 0; border-bottom: 1px solid #787878;">
+                  <sc-text style="width: 140px;">${label} (${hostname})</sc-text>
+                  <sc-status active></sc-status>
+                  <sc-select
+                    style="width: 180px;"
+                    .options=${filesystem.getTreeAsUrlMap('', true)}
+                    placeholder="select sound file"
+                    value=${player.get('soundfile')}
+                    @change=${e => player.set({ soundfile: e.detail.value })}
+                  ></sc-select>
+                  <sc-status ?active=${player.get('loaded')}></sc-status>
+                  <sc-transport
+                    .buttons=${['play', 'stop']}
+                    .value=${player.get('audio-player:control') === 'start' ? 'play' : 'stop'}
+                    @change=${e => {
+                      const value = e.detail.value === 'play' ? 'start' : 'stop';
+                      player.set({ 'audio-player:control': value })
+                    }}
+                  ></sc-transport>
+                  <sc-slider
+                    min=${AudioBus.params.volume.min}
+                    max=${AudioBus.params.volume.max}
+                    value=${player.get('mix:volume')}
+                    @input=${e => player.set({ 'mix:volume': e.detail.value })}
+                  ></sc-slider>
+                  <sc-text style="width: 80px;">reboot</sc-text>
+                  <sc-bang
+                    @input=${e => player.set({ kill: true })}
+                  ></sc-bang>
+                </div>
+              `
+            } else {
+              return html`
+                <div style="padding: 16px 0; border-bottom: 1px solid #787878;">
+                  <sc-text style="width: 140px;">${label} (${hostname})</sc-text>
+                  <sc-status></sc-status>
+                </div>
+              `;
+            }
+
+
           })}
         </div>
       `;
     }
   }
 
+  $layout.addComponent(intro);
   $layout.addComponent(audioControls);
   $layout.addComponent(playersView);
 }

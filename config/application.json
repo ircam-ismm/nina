@@ -2,12 +2,15 @@
   name: 'nina',
   author: '',
   clients: {
-    player: {
-      target: 'browser',
-      default: true,
-    },
     controller: {
       target: 'browser',
+    },
+    thing: {
+      target: 'node',
+    },
+    intro: {
+      target: 'browser',
+      default: true,
     },
   },
 }

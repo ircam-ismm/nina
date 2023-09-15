@@ -74,8 +74,13 @@ controller-layout {
   & > div {
     display: flex;
 
-    .col {
-      width: 50%;
+    .col-1 {
+      width: 35%;
+      padding: 20px;
+    }
+
+    .col-2 {
+      width: 65%;
       padding: 20px;
     }
   }

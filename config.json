@@ -1,0 +1,21 @@
+{
+  labels: {
+    'soundpi-dev-020.local': 'drum',
+    'soundpi-dev-021.local': 'voice',
+    'soundpi-dev-022.local': 'aaaaaa',
+    'soundpi-dev-023.local': 'bbbbbb',
+    'soundpi-dev-024.local': 'cccccc',
+    'soundpi-dev-025.local': 'dddddd',
+    'soundpi-dev-026.local': 'eeeeee',
+    'soundpi-dev-027.local': 'ffffff',
+  },
+  presets: {
+    'audio-player:period': 0.05,
+    'audio-player:duration': 0.2,
+    'feedback-delay:preGain': 0,
+    'feedback-delay:delayTime': 0.1,
+    'feedback-delay:feedback': 0.5,
+    'feedback-delay:filterFrequency': 12000,
+  },
+  introFile: 'audio-files/intro.wav',
+}
