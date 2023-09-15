@@ -6,3 +6,5 @@ audio-files
 !audio-files/drum-loop.wav
 
 default-preset.json
+
+config/env-*
