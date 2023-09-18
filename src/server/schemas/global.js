@@ -20,4 +20,8 @@ export default {
     default: null,
     nullable: true,
   },
+  shutdown: {
+    type: 'boolean',
+    event: true,
+  },
 };

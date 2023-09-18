@@ -20,7 +20,7 @@ cd _utils/rpi-daemon
 cd nina
 
 scp config/env-default.json pi@soundpi-dev-011.local:/home/pi/nina/config/
-scp _utils/node-web-audio-api.linux-arm-gnueabihf.node pi@soundpi-dev-011.local:/home/pi/nina/node_modules/node-web-audio-api/
+
 
 sudo 
 

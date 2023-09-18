@@ -111,8 +111,7 @@ async function main($container) {
     render() {
       return html`
         <div class="col-1">
-          <h2># controls</h2>
-          <div style="margin-bottom: 10px;">
+          <div style="margin: 16px 0 10px;">
             <sc-button
               @input=${e => global.set({ reset: true })}
             >Reset</sc-button>
@@ -141,7 +140,6 @@ async function main($container) {
 
       return html`
         <div class="col-2">
-          <h2># Players</h2>
           ${repeat(Object.entries(labels), ([hostname, label]) => hostname, ([hostname, label]) => {
             const player = players.find(p => p.get('hostname') === hostname);
             const title = html`<sc-text style="width: 100px;">${label} (${hostname})</sc-text>`
@@ -190,6 +188,16 @@ async function main($container) {
 
 
           })}
+
+          <div style="padding: 16px 0; text-align: right;">
+            <sc-button
+              @input=${e => {
+                if (confirm('are you sure?')) {
+                  global.set({ shutdown: true });
+                }
+              }}
+            >shutdown clients</sc-button>
+          </div>
         </div>
       `;
     }

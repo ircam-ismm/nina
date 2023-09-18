@@ -1,6 +1,7 @@
 import os from 'node:os';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 
 import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
@@ -72,11 +73,15 @@ async function bootstrap() {
   // set player label according to hostname
   const labels = global.get('labels');
   const hostname = os.hostname();
+  let isEmulated;
 
   if (hostname in labels) {
+    isEmulated = false;
+
     const label = labels[hostname];
     player.set({ label, hostname });
   } else {
+    isEmulated = true;
     // DEV mode
     const hostnames = Object.keys(labels);
     const index = client.id % hostnames.length;
@@ -113,6 +118,16 @@ async function bootstrap() {
 
     if ('kill' in updates) {
       process.exit(1);
+    }
+  });
+
+  global.onUpdate(async updates => {
+    if ('shutdown' in updates) {
+      console.log('> shutdown client');
+
+      if (!isEmulated) {
+        execSync('sudo shutdown now');
+      }
     }
   });
 
