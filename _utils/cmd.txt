@@ -1,0 +1,50 @@
+
+
+git clone https://github.com/ircam-ismm/nina.git
+cd nina
+npm install
+npm run build
+
+# uninstall simone daemon
+
+sudo systemctl stop distributed-mosaicing-daemon.service
+sudo systemctl disable distributed-mosaicing-daemon.service
+sudo systemctl reload
+# install nina daemon
+cd _utils/rpi-daemon
+./install-daemon.sh
+
+
+# copy config file from laptop
+
+cd nina
+
+scp config/env-default.json pi@soundpi-dev-011.local:/home/pi/nina/config/
+scp _utils/node-web-audio-api.linux-arm-gnueabihf.node pi@soundpi-dev-011.local:/home/pi/nina/node_modules/node-web-audio-api/
+
+sudo 
+
+
+# jack
+
+# w/ APT
+# sudo apt-get install jackd2 - does not work...
+
+# build from sources
+mkdir ~/utils
+cd ~/utils
+git clone https://github.com/jackaudio/jack2.git --depth 1
+cd jack2
+./waf configure
+./waf build
+sudo ./waf install
+sudo ldconfig
+cd ..
+
+# which jack
+# /usr/local/bin/jack
+
+
+# see systemctl file for config
+# echo "/usr/bin/jackd -P95 -dalsa -dhw:sndrpihifiberry,0 -r48000 -p2048" > .jackdrc
+# source .jackdrc

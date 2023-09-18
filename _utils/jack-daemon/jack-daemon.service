@@ -1,0 +1,14 @@
+[Unit]
+Description=JACK
+After=sound.target
+
+[Service]
+LimitRTPRIO=infinity
+LimitMEMLOCK=infinity
+Environment="JACK_NO_AUDIO_RESERVATION=1"
+User=pi
+Group=audio
+ExecStart=jackd -P95 -dalsa -dhw:sndrpihifiberry,0 -r48000 -p2048
+
+[Install]
+WantedBy=multi-user.target
