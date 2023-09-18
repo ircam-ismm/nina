@@ -24,4 +24,8 @@ export default {
     type: 'boolean',
     event: true,
   },
+  reboot: {
+    type: 'boolean',
+    event: true,
+  },
 };

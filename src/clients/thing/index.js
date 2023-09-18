@@ -129,6 +129,14 @@ async function bootstrap() {
         execSync('sudo shutdown now');
       }
     }
+
+    if ('reboot' in updates) {
+      console.log('> reboot client');
+
+      if (!isEmulated) {
+        execSync('sudo reboot now');
+      }
+    }
   });
 
   bindStateUpdatesToAudioNode(player, 'audio-player', audioPlayer);

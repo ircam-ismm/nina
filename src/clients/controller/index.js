@@ -171,7 +171,7 @@ async function main($container) {
                     value=${player.get('mix:volume')}
                     @input=${e => player.set({ 'mix:volume': e.detail.value })}
                   ></sc-slider>
-                  <sc-text style="width: 80px;">reboot</sc-text>
+                  <sc-text style="width: 90px;">restart app</sc-text>
                   <sc-bang
                     @input=${e => player.set({ kill: true })}
                   ></sc-bang>
@@ -190,6 +190,13 @@ async function main($container) {
           })}
 
           <div style="padding: 16px 0; text-align: right;">
+            <sc-button
+              @input=${e => {
+                if (confirm('are you sure?')) {
+                  global.set({ reboot: true });
+                }
+              }}
+            >reboot clients</sc-button>
             <sc-button
               @input=${e => {
                 if (confirm('are you sure?')) {
