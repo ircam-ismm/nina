@@ -1,36 +1,37 @@
-
-
-git clone https://github.com/ircam-ismm/nina.git
-cd nina
-npm install
-npm run build
-
 # uninstall simone daemon
-
 sudo systemctl stop distributed-mosaicing-daemon.service
 sudo systemctl disable distributed-mosaicing-daemon.service
 sudo systemctl reload
-# install nina daemon
-cd _utils/rpi-daemon
-./install-daemon.sh
+sudo systemctl status distributed-mosaicing-daemon.service
+
+sudo systemctl stop nina-daemon.service
+sudo systemctl disable nina-daemon.service
+sudo systemctl reload
+sudo systemctl status nina-daemon.service
 
 
-# copy config file from laptop
+# clone and install nine
+git clone https://github.com/ircam-ismm/nina.git
 
-cd nina
+## copy config file
 
+## on laptop
 scp config/env-default.json pi@soundpi-dev-011.local:/home/pi/nina/config/
 
+## on RPi
+ls -al ~/nina/config/
 
-sudo 
+## install and build app
+cd nina
+git pull origin main
+npm install
+npm run build
 
 
-# jack
+# install JACK
 
-# w/ APT
-# sudo apt-get install jackd2 - does not work...
+## build from sources
 
-# build from sources
 mkdir ~/utils
 cd ~/utils
 git clone https://github.com/jackaudio/jack2.git --depth 1
@@ -39,12 +40,29 @@ cd jack2
 ./waf build
 sudo ./waf install
 sudo ldconfig
-cd ..
+which jackd
+# fix broken driver directory
+sudo ln -s /usr/local/lib/jack /usr/lib/arm-linux-gnueabihf/jack
 
-# which jack
-# /usr/local/bin/jack
+# > /usr/local/bin/jackd
+
+# install jack deamon
+cd ~/nina/_utils/jack-daemon
+chmod u+x install-daemon.sh uninstall-daemon.sh
+./install-daemon.sh
+
+sudo systemctl status jack-daemon.service
 
 
-# see systemctl file for config
-# echo "/usr/bin/jackd -P95 -dalsa -dhw:sndrpihifiberry,0 -r48000 -p2048" > .jackdrc
-# source .jackdrc
+# install nina daemon
+cd ~/nina/_utils/rpi-daemon
+chmod u+x install-daemon.sh uninstall-daemon.sh
+./install-daemon.sh
+
+sudo systemctl status nina-daemon.service
+
+sudo shutdown now
+
+# reboot and check...
+
+
