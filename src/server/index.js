@@ -45,9 +45,17 @@ const server = new Server(config);
 server.useDefaultApplicationTemplate();
 
 server.pluginManager.register('platform-init', platformInitPlugin);
-server.pluginManager.register('filesystem', filesystemPlugin, {
-  dirname: 'audio-files',
-  publicPath: 'audio-files',
+server.pluginManager.register('synth-filesystem', filesystemPlugin, {
+  dirname: 'audio-files/synth',
+  publicPath: 'audio-files/synth',
+});
+server.pluginManager.register('trigger-filesystem', filesystemPlugin, {
+  dirname: 'audio-files/trigger',
+  publicPath: 'audio-files/trigger',
+});
+server.pluginManager.register('intro-filesystem', filesystemPlugin, {
+  dirname: 'audio-files/intro',
+  publicPath: 'audio-files/intro',
 });
 server.pluginManager.register('sync', syncPlugin);
 

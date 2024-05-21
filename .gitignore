@@ -2,8 +2,10 @@ node_modules
 .build
 
 .DS_Store
-audio-files
-!audio-files/drum-loop.wav
+
+audio-files/intro/*
+audio-files/synth/*
+audio-files/trigger/*
 
 default-preset.json
 

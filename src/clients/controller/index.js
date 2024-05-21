@@ -77,14 +77,18 @@ async function main($container) {
     reloadOnVisibilityChange: false,
   });
 
-  client.pluginManager.register('filesystem', filesystemPlugin);
+  client.pluginManager.register('synth-filesystem', filesystemPlugin);
+  client.pluginManager.register('trigger-filesystem', filesystemPlugin);
 
   await client.start();
 
   const $layout = createLayout(client, $container);
 
-  const filesystem = await client.pluginManager.get('filesystem');
-  filesystem.onUpdate(() => $layout.requestUpdate());
+  const synthFilesystem = await client.pluginManager.get('synth-filesystem');
+  synthFilesystem.onUpdate(() => $layout.requestUpdate());
+
+  const triggerFilesystem = await client.pluginManager.get('trigger-filesystem');
+  triggerFilesystem.onUpdate(() => $layout.requestUpdate());
 
   const global = await client.stateManager.attach('global');
   global.onUpdate(() => $layout.requestUpdate());
@@ -94,125 +98,123 @@ async function main($container) {
   players.onDetach(() => $layout.requestUpdate());
   players.onUpdate(() => $layout.requestUpdate());
 
-  const intro = {
+  const controllerView = {
     render() {
       return html`
-        <div style="position: absolute; right: 2px; top: 40px;">
-          <sc-text>${global.get('introFile')}</sc-text>
-          <sc-transport value=${global.get('introPlayingState')} buttons=${JSON.stringify(['play', 'stop'])}
-            @change=${e => global.set({ introPlayingState: e.detail.value })}
-          ></sc-transport>
-        </div>
-      `;
-    }
-  }
-
-  const audioControls = {
-    render() {
-      return html`
-        <div class="col-1">
-          <div style="margin: 16px 0 10px;">
-            <sc-button
-              @input=${e => global.set({ reset: true })}
-            >Reset</sc-button>
+        <!-- intro -->
+        <div style="height: 40px; width: 100%; position: relative">
+          <div>
+            <sc-text style="width: 100px;">LED</sc-text>
+            <sc-color-picker
+              value=${global.get('ledBaseColor')}
+              @input=${e => global.set({ ledBaseColor: e.detail.value })}
+            ></sc-color-picker>
+            <sc-slider
+              value=${global.get('ledIntensityFactor')}
+              @input=${e => global.set({ ledIntensityFactor: e.detail.value })}
+              min="0"
+              max="1"
+            ></sc-slider>
           </div>
-          <sc-transport
-            style="height: 50px;"
-            .buttons=${['play', 'stop']}
-            .value=${global.get('audio-player:control') === 'start' ? 'play' : 'stop'}
-            @change=${e => {
-              const value = e.detail.value === 'play' ? 'start' : 'stop';
-              global.set({ 'audio-player:control': value })
-            }}
-          ></sc-transport>
-
-          ${createInterfaceAndBindStateNamespaced(GranularAudioPlayer.params, global, 'audio-player')}
-          ${createInterfaceAndBindStateNamespaced(FeedbackDelay.params, global, 'feedback-delay')}
-          ${createInterfaceAndBindStateNamespaced(AudioBus.params, global, 'master')}
+          <div style="position: absolute; top: 0; right: 2px;">
+            <sc-text>${global.get('introFile')}</sc-text>
+            <sc-transport value=${global.get('introPlayingState')} buttons=${JSON.stringify(['play', 'stop'])}
+              @change=${e => global.set({ introPlayingState: e.detail.value })}
+            ></sc-transport>
+          </div>
         </div>
-      `;
-    }
-  }
+        <div class="row-1">
+          <!-- global controls -->
+          <div class="col-1">
+            <div style="margin: 16px 0 10px;">
+              <sc-button
+                @input=${e => global.set({ reset: true })}
+              >Reset</sc-button>
+            </div>
+            <sc-transport
+              style="height: 50px;"
+              .buttons=${['play', 'stop']}
+              .value=${global.get('audio-player:control') === 'start' ? 'play' : 'stop'}
+              @change=${e => {
+                const value = e.detail.value === 'play' ? 'start' : 'stop';
+                global.set({ 'audio-player:control': value })
+              }}
+            ></sc-transport>
 
-  const playersView = {
-    render() {
-      const labels = global.get('labels');
+            ${createInterfaceAndBindStateNamespaced(GranularAudioPlayer.params, global, 'audio-player')}
+            ${createInterfaceAndBindStateNamespaced(FeedbackDelay.params, global, 'feedback-delay')}
+            ${createInterfaceAndBindStateNamespaced(AudioBus.params, global, 'master')}
+          </div>
+          <div class="col-2">
+            ${repeat(Object.entries(global.get('labels')), ([hostname, label]) => hostname, ([hostname, label]) => {
+              const player = players.find(p => p.get('hostname') === hostname);
+              const title = html`<sc-text style="width: 100px;">${label} (${hostname})</sc-text>`
 
-      return html`
-        <div class="col-2">
-          ${repeat(Object.entries(labels), ([hostname, label]) => hostname, ([hostname, label]) => {
-            const player = players.find(p => p.get('hostname') === hostname);
-            const title = html`<sc-text style="width: 100px;">${label} (${hostname})</sc-text>`
-
-            if (player) {
-              return html`
-                <div style="padding: 16px 0; border-bottom: 1px solid #787878;">
-                  <sc-text style="width: 140px;">${label} (${hostname})</sc-text>
-                  <sc-status active></sc-status>
-                  <sc-select
-                    style="width: 180px;"
-                    .options=${filesystem.getTreeAsUrlMap('', true)}
-                    placeholder="select sound file"
-                    value=${player.get('soundfile')}
-                    @change=${e => player.set({ soundfile: e.detail.value })}
-                  ></sc-select>
-                  <sc-status ?active=${player.get('loaded')}></sc-status>
-                  <sc-transport
-                    .buttons=${['play', 'stop']}
-                    .value=${player.get('audio-player:control') === 'start' ? 'play' : 'stop'}
-                    @change=${e => {
-                      const value = e.detail.value === 'play' ? 'start' : 'stop';
-                      player.set({ 'audio-player:control': value })
-                    }}
-                  ></sc-transport>
-                  <sc-slider
-                    min=${AudioBus.params.volume.min}
-                    max=${AudioBus.params.volume.max}
-                    value=${player.get('mix:volume')}
-                    @input=${e => player.set({ 'mix:volume': e.detail.value })}
-                  ></sc-slider>
-                  <sc-text style="width: 90px;">restart app</sc-text>
-                  <sc-bang
-                    @input=${e => player.set({ kill: true })}
-                  ></sc-bang>
-                </div>
-              `
-            } else {
-              return html`
-                <div style="padding: 16px 0; border-bottom: 1px solid #787878;">
-                  <sc-text style="width: 140px;">${label} (${hostname})</sc-text>
-                  <sc-status></sc-status>
-                </div>
-              `;
-            }
-
-
+              if (player) {
+                return html`
+                  <div style="padding: 16px 0; border-bottom: 1px solid #787878;">
+                    <sc-text style="width: 140px;">${label} (${hostname})</sc-text>
+                    <sc-status active></sc-status>
+                    <sc-select
+                      style="width: 180px;"
+                      .options=${synthFilesystem.getTreeAsUrlMap('', true)}
+                      placeholder="select sound file"
+                      value=${player.get('soundfile')}
+                      @change=${e => player.set({ soundfile: e.detail.value })}
+                    ></sc-select>
+                    <sc-status ?active=${player.get('loaded')}></sc-status>
+                    <sc-transport
+                      .buttons=${['play', 'stop']}
+                      .value=${player.get('audio-player:control') === 'start' ? 'play' : 'stop'}
+                      @change=${e => {
+                        const value = e.detail.value === 'play' ? 'start' : 'stop';
+                        player.set({ 'audio-player:control': value })
+                      }}
+                    ></sc-transport>
+                    <sc-slider
+                      min=${AudioBus.params.volume.min}
+                      max=${AudioBus.params.volume.max}
+                      value=${player.get('mix:volume')}
+                      @input=${e => player.set({ 'mix:volume': e.detail.value })}
+                    ></sc-slider>
+                    <sc-text style="width: 90px;">restart app</sc-text>
+                    <sc-bang
+                      @input=${e => player.set({ kill: true })}
+                    ></sc-bang>
+                  </div>
+                `
+              } else {
+                return html`
+                  <div style="padding: 16px 0; border-bottom: 1px solid #787878;">
+                    <sc-text style="width: 140px;">${label} (${hostname})</sc-text>
+                    <sc-status></sc-status>
+                  </div>
+                `;
+              }
+            })}
+          </div>
+        </div>
+        <div class="trigger-files">
+          ${Object.entries(triggerFilesystem.getTreeAsUrlMap('', true)).map(([name, url]) => {
+            return html`
+              <div style="display: flex; margin-bottom: 2px;">
+                <sc-text>${name}</sc-text>
+                ${players.map(player => {
+                  return html`
+                    <sc-button
+                      @input=${e => player.set({ triggerFile: url })}
+                    >${player.get('label')}</sc-button>
+                  `;
+                })}
+              </div>
+            `
           })}
-
-          <div style="padding: 16px 0; text-align: right;">
-            <sc-button
-              @input=${e => {
-                if (confirm('are you sure?')) {
-                  global.set({ reboot: true });
-                }
-              }}
-            >reboot clients</sc-button>
-            <sc-button
-              @input=${e => {
-                if (confirm('are you sure?')) {
-                  global.set({ shutdown: true });
-                }
-              }}
-            >shutdown clients</sc-button>
-          </div>
         </div>
       `;
     }
   }
 
-  $layout.addComponent(intro);
-  $layout.addComponent(audioControls);
-  $layout.addComponent(playersView);
+  $layout.addComponent(controllerView);
 }
 
 launcher.execute(main, {

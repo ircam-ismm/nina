@@ -42,6 +42,7 @@ sudo ./waf install
 sudo ldconfig
 which jackd
 # fix broken driver directory
+
 sudo ln -s /usr/local/lib/jack /usr/lib/arm-linux-gnueabihf/jack
 
 # > /usr/local/bin/jackd
@@ -51,6 +52,7 @@ cd ~/nina/_utils/jack-daemon
 chmod u+x install-daemon.sh uninstall-daemon.sh
 ./install-daemon.sh
 
+sudo systemctl restart jack-daemon.service
 sudo systemctl status jack-daemon.service
 
 

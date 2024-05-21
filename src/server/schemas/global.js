@@ -20,12 +20,14 @@ export default {
     default: null,
     nullable: true,
   },
-  shutdown: {
-    type: 'boolean',
-    event: true,
+  ledBaseColor: {
+    type: 'string',
+    default: '#ffffff',
   },
-  reboot: {
-    type: 'boolean',
-    event: true,
+  ledIntensityFactor: {
+    type: 'float',
+    default: 1,
+    min: 0,
+    max: 1,
   },
 };

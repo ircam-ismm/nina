@@ -17,5 +17,5 @@
     'feedback-delay:feedback': 0.5,
     'feedback-delay:filterFrequency': 12000,
   },
-  introFile: 'audio-files/intro.wav',
+  introFile: 'audio-files/intro/intro.wav',
 }
