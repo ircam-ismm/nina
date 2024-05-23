@@ -1,4 +1,4 @@
-class GranularAudioPlayer {
+class SimpleAudioPlayer {
   static params = {
     control: {
       type: 'enum',
@@ -33,27 +33,17 @@ class GranularAudioPlayer {
   }
 
   start() {
-    if (!this.buffer) {
-      console.log('[GranularAudioPlayer] no buffer set, abort start');
+    if (!this._buffer) {
+      console.log('[SimpleAudioPlayer] no buffer set, abort start');
       return;
     }
 
-    if (!this._src) {
-      this._src = this.context.createBufferSource();
-      this._src.connect(this._output);
-      this._src.buffer = buffer;
-      this._src.loop = true;
-      this._src.start();
-    }
-  }
-
-  stop() {
-    if (this._src) {
-      this._src.stop();
-      this._src = null;
-    }
+    this._src = this.context.createBufferSource();
+    this._src.connect(this._output);
+    this._src.buffer = this.buffer;
+    this._src.start();
   }
 }
 
-export default GranularAudioPlayer;
+export default SimpleAudioPlayer;
 

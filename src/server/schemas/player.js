@@ -27,4 +27,8 @@ export default {
     type: 'boolean',
     default: false,
   },
+  triggerFile: {
+    type: 'string',
+    event: true,
+  },
 };

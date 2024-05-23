@@ -11,10 +11,9 @@
     "build:production": "npm run clean && sass src/clients/styles:.build/public/css && soundworks-build -b -m",
     "clean": "soundworks-build -D",
     "dev": "npm run build && (concurrently -i -p \"none\" \"npm run watch:inspect server\" \"soundworks-build -b -w\" \"npm run watch:sass\")",
-    "postinstall": "soundworks-build -C",
     "start": "node .build/server/index.js",
     "watch": "soundworks-build -p",
-    "watch:inspect": "soundworks-build -d -p",
+    "watch:inspect": "soundworks-build -i -p",
     "watch:sass": "sass --watch src/clients/styles:.build/public/css",
     "lint": "eslint ."
   },
@@ -29,7 +28,7 @@
     "@soundworks/plugin-sync": "^2.0.0-alpha.2",
     "json5": "^2.2.3",
     "lit": "^2.2.2",
-    "node-web-audio-api": "^0.20.0",
+    "node-web-audio-api": "^0.21.0",
     "tempy": "^3.1.0",
     "waves-loaders": "^0.1.6"
   },

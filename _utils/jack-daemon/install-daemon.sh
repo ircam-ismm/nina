@@ -21,4 +21,3 @@ sudo systemctl daemon-reload
 sudo systemctl start "$service"
 
 echo "Enabled and Started \"$service\""
-

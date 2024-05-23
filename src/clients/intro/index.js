@@ -1,8 +1,8 @@
 import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
 import launcher from '@soundworks/helpers/launcher.js';
-import syncPlugin from '@soundworks/plugin-sync/client.js';
-import platformInitPlugin from '@soundworks/plugin-platform-init/client.js';
+import pluginSync from '@soundworks/plugin-sync/client.js';
+import pluginPlatformInit from '@soundworks/plugin-platform-init/client.js';
 import { AudioBufferLoader } from 'waves-loaders';
 
 import createLayout from './layout.js';
@@ -34,11 +34,11 @@ async function main($container) {
    * Register some soundworks plugins, you will need to install the plugins
    * before hand (run `npx soundworks` for help)
    */
-  client.pluginManager.register('sync', syncPlugin, {
-    getTimeFunction: () => audioContext.currentTime,
-  });
+  client.pluginManager.register('platform-init', pluginPlatformInit, { audioContext });
 
-  client.pluginManager.register('platform-init', platformInitPlugin, { audioContext });
+  client.pluginManager.register('sync', pluginSync, {
+    getTimeFunction: () => audioContext.currentTime,
+  }, ['platform-init']);
 
   /**
    * Register the soundworks client into the launcher
@@ -60,7 +60,6 @@ async function main($container) {
    * low priority, messing any scheduled events.
    */
   launcher.register(client, { initScreensContainer: $container });
-
   /**
    * Launch application
    */

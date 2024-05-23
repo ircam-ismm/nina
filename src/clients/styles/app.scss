@@ -66,21 +66,30 @@ simple-layout {
   }
 }
 
-// default styles for controller layout
+/** default styles for controller layout */
 controller-layout {
   display: block;
   min-height: 100vh;
 
   & > div {
     display: flex;
+    flex-direction: column;
 
-    .col-1 {
-      width: 35%;
-      padding: 20px;
+    .row-1 {
+      display: flex;
+
+      .col-1 {
+        width: 35%;
+        padding: 20px;
+      }
+
+      .col-2 {
+        width: 65%;
+        padding: 20px;
+      }
     }
 
-    .col-2 {
-      width: 65%;
+    .trigger-files {
       padding: 20px;
     }
   }
