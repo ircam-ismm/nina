@@ -115,6 +115,7 @@ async function main($container) {
               min="0"
               max="1"
             ></sc-slider>
+            <sc-midi></sc-midi>
           </div>
           <div style="position: absolute; top: 0; right: 2px;">
             <sc-text>${global.get('introFile')}</sc-text>

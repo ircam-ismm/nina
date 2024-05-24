@@ -1,13 +1,13 @@
   {
   labels: {
     'dotpi-dev-041': 'drum',
-    'dotpi-dev-012': 'voice',
-    'dotpi-dev-013': 'aaaaaa',
-    'dotpi-dev-014': 'bbbbbb',
-    'dotpi-dev-019': 'cccccc',
-    'dotpi-dev-020': 'dddddd',
-    'dotpi-dev-054': 'eeeeee',
-    'dotpi-dev-074': 'ffffff',
+    'dotpi-dev-052': 'voice',
+    'dotpi-dev-066': 'aaaaaa',
+    'dotpi-dev-032': 'bbbbbb',
+    'dotpi-dev-046': 'cccccc',
+    'dotpi-dev-073': 'dddddd',
+    'dotpi-dev-036': 'eeeeee',
+    'dotpi-dev-033': 'ffffff',
   },
   presets: {
     'audio-player:period': 0.05,
