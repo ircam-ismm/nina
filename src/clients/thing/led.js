@@ -40,10 +40,17 @@ export default class LED {
   }
 
   async init(audioContext, scheduler, inputNode) {
+    console.log(this.emulated, ledConfig);
+
     if (!this.emulated) {
       const ledClient = new Client(ledConfig);
-      await ledClient.start();
+      try {
+        await ledClient.start();
+      } catch (err) {
+        console.log(err.message);
+      }
 
+      console.log('LED inited');
       this.rgb = await ledClient.stateManager.create('rgb');
       this.rgb.set({ r: 0, g: 0, b: 0 });
     }
@@ -88,6 +95,7 @@ export default class LED {
       }
 
       return currentTime + analyser.fftSize / audioContext.sampleRate;
+      // return currentTime + 0.2;
     }
 
     scheduler.add(engine, audioContext.currentTime);

@@ -1,7 +1,6 @@
 import os from 'node:os';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
 
 import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
@@ -10,11 +9,10 @@ import { Scheduler } from '@ircam/sc-scheduling';
 import { AudioContext } from 'node-web-audio-api';
 
 import { loadConfig } from '../../utils/load-config.js';
-import createLayout from './layout.js';
 import AudioBus from '../audio/AudioBus.js';
 import FeedbackDelay from '../audio/FeedbackDelay.js';
 import GranularAudioPlayer from '../audio/GranularAudioPlayer.js';
-import SimpleAudioPlayer from '../audio/SimpleAudioPlayer.js';
+// import SimpleAudioPlayer from '../audio/SimpleAudioPlayer.js';
 import NodeBufferLoader from '../audio/NodeBufferLoader.js';
 
 import LED from './led.js';
@@ -109,11 +107,7 @@ async function bootstrap() {
   synthPlayer.connect(feedbackDelay.input);
   synthPlayer.connect(mix.input);
 
-  const triggerPlayer = new SimpleAudioPlayer(audioContext);
-  triggerPlayer.connect(master.input);
-
   // led
-  const verboseLed = false;
   const led = new LED({ emulated: isEmulated, verbose: false });
   led.init(audioContext, scheduler, master);
 
@@ -138,11 +132,18 @@ async function bootstrap() {
     }
 
     if ('triggerFile' in updates) {
-      const arrayBuffer = await fs.readFile(path.join(process.cwd(), updates.triggerFile));
+      const { url, volume } = updates.triggerFile;
+      const arrayBuffer = await fs.readFile(path.join(process.cwd(), url));
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.buffer);
-      triggerPlayer.buffer = audioBuffer;
 
-      triggerPlayer.start();
+      const gain = audioContext.createGain();
+      gain.connect(master.input);
+      gain.gain.value = volume;
+
+      const src = audioContext.createBufferSource();
+      src.connect(gain);
+      src.buffer = audioBuffer;
+      src.start();
     }
 
     if ('kill' in updates) {

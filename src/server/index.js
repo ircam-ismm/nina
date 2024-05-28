@@ -16,7 +16,7 @@ import globalSchema from './schemas/global.js';
 
 import AudioBus from '../clients/audio/AudioBus.js';
 import FeedbackDelay from '../clients/audio/FeedbackDelay.js';
-import Overdrive from '../clients/audio/Overdrive.js';
+// import Overdrive from '../clients/audio/Overdrive.js';
 import GranularAudioPlayer from '../clients/audio/GranularAudioPlayer.js';
 
 // - General documentation: https://soundworks.dev/

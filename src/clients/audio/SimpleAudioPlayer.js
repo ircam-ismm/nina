@@ -11,8 +11,6 @@ class SimpleAudioPlayer {
     this.context = context;
 
     this._buffer = null;
-    this._src = null;
-
     this._output = this.context.createGain();
   }
 
@@ -38,11 +36,12 @@ class SimpleAudioPlayer {
       return;
     }
 
-    this._src = this.context.createBufferSource();
-    this._src.connect(this._output);
-    this._src.buffer = this.buffer;
-    this._src.start();
+    const src = this.context.createBufferSource();
+    src.connect(this._output);
+    src.buffer = this.buffer;
+    src.start();
   }
+
 }
 
 export default SimpleAudioPlayer;
