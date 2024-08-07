@@ -7,15 +7,15 @@ class GranularAudioPlayer {
     },
     period: {
       type: 'float',
-      min: 0.01,
+      min: 0.05,
       max: 1,
-      default: 0.02,
+      default: 0.075,
     },
     duration: {
       type: 'float',
       min: 0.01,
       max: 1,
-      default: 0.1,
+      default: 0.2,
     },
   };
 
@@ -69,22 +69,34 @@ class GranularAudioPlayer {
   }
 
   render(currentTime) {
+    let now = currentTime;
+
+    // add jitter is period is in audible range (> 50Hz || < 20ms), otherwise keep it straight to
+    // avoid phase artifacts
+    if (this.period < 0.02) {
+      now += Math.random() * 0.001;
+    }
+
+    // if duration has increased between two grains, we might go beyond buffer duration
+    // clamp duration so that we don't reach the end of audio file (which might produce clics)
+    const duration = Math.min(this.duration, this.buffer.duration - this.position);
 
     const env = this.context.createGain();
     env.connect(this._output);
     env.gain.value = 0;
-    env.gain.setValueAtTime(0, currentTime);
-    env.gain.linearRampToValueAtTime(1, currentTime + this.duration / 2);
-    env.gain.linearRampToValueAtTime(0, currentTime + this.duration);
+    env.gain.setValueAtTime(0, now);
+    env.gain.linearRampToValueAtTime(1, now + duration / 2);
+    env.gain.linearRampToValueAtTime(0, now + duration);
 
     const src = this.context.createBufferSource();
     src.connect(env);
     src.loop = true;
     src.buffer = this.buffer;
-    src.start(currentTime, this.position, this.duration);
+    src.start(now, this.position);
+    src.stop(now + duration)
 
-
-    this.position = (this.position + this.period) % this.buffer.duration;
+    // take grain duration into account to wrap around
+    this.position = (this.position + this.period) % (this.buffer.duration - this.duration);
 
     return currentTime + this.period;
   }
