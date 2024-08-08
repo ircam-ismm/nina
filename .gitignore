@@ -10,3 +10,5 @@ audio-files/trigger/*
 default-preset.json
 
 config/env-*
+
+*.bak
