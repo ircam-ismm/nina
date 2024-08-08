@@ -9,13 +9,13 @@ class GranularAudioPlayer {
       type: 'float',
       min: 0.05,
       max: 1,
-      default: 0.075,
+      default: 0.1,
     },
     duration: {
       type: 'float',
       min: 0.01,
       max: 1,
-      default: 0.2,
+      default: 0.25,
     },
   };
 
