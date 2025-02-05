@@ -1,22 +1,5 @@
-import { Client } from '@soundworks/core/client.js';
+import { Client } from '@dotpi/led/Client.js';
 import { AnalyserNode } from 'node-web-audio-api';
-
-const ledConfig = {
-  role: 'dotpi-led-client',
-  app: {
-    name: 'dotpi-led',
-    clients: {
-      'dotpi-led-client': { target: 'node' },
-    },
-  },
-  env: {
-    type: 'development',
-    port: 9999,
-    serverAddress: '127.0.0.1',
-    useHttps: false,
-    verbose: true, //  process.env.VERBOSE === '1' ? true : false,
-  },
-};
 
 function hexToRgb(hex, factor) {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -40,21 +23,11 @@ export default class LED {
   }
 
   async init(audioContext, scheduler, inputNode) {
-    console.log(this.emulated, ledConfig);
-
-    if (!this.emulated) {
-      const ledClient = new Client(ledConfig);
-      try {
-        await ledClient.start();
-      } catch (err) {
-        console.log(err.message);
-      }
-
-      console.log('LED inited');
-      this.rgb = await ledClient.stateManager.create('rgb');
-      this.rgb.set({ r: 0, g: 0, b: 0 });
+    if (this.emulated) {
+      return;
     }
 
+    const ledClient = Client.create();
     const analyser = new AnalyserNode(audioContext, { fftSize: 4096 });
     const analyserData = new Float32Array(analyser.fftSize);
     inputNode.connect(analyser);
@@ -87,7 +60,7 @@ export default class LED {
       const color = hexToRgb(this.baseColor, this.intensityFactor * colorIntensity);
 
       if (!this.emulated) {
-        this.rgb.set(color);
+        ledClient.fill(color);
       }
 
       if (this.verbose) {

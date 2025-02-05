@@ -1,0 +1,10 @@
+name: nina
+author: ""
+clients:
+  controller:
+    runtime: browser
+  thing:
+    runtime: node
+  intro:
+    default: true
+    runtime: browser

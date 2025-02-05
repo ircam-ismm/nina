@@ -1,5 +1,7 @@
 {
   "name": "prototype-phones",
   "eslint": true,
-  "language": "js"
+  "language": "js",
+  "configFormat": "yaml",
+  "createVersion": "5.0.1"
 }

@@ -47,9 +47,9 @@ async function main($container) {
    * - Display default initialization screens. If you want to change the provided
    * initialization screens, you can import all the helpers directly in your
    * application by doing `npx soundworks --eject-helpers`. You can also
-   * customise some global syles variables (background-color, text color etc.)
+   * customize some global styles variables (background-color, text color etc.)
    * in `src/clients/components/css/app.scss`.
-   * You can also change the default language of the intialization screen by
+   * You can also change the default language of the initialization screen by
    * setting, the `launcher.language` property, e.g.:
    * `launcher.language = 'fr'`
    * - By default the launcher automatically reloads the client when the socket
@@ -115,7 +115,7 @@ async function main($container) {
   }, true);
 }
 
-// The launcher enables instanciation of multiple clients in the same page to
+// The launcher enables instantiation of multiple clients in the same page to
 // facilitate development and testing.
 // e.g. `http://127.0.0.1:8000?emulate=10` to run 10 clients side-by-side
 launcher.execute(main, {

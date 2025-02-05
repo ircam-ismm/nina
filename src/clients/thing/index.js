@@ -4,16 +4,14 @@ import path from 'node:path';
 
 import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
-import launcher from '@soundworks/helpers/launcher.js';
+import { launcher, loadConfig } from '@soundworks/helpers/node.js';
 import { Scheduler } from '@ircam/sc-scheduling';
 import { AudioContext } from 'node-web-audio-api';
 
-import { loadConfig } from '../../utils/load-config.js';
 import AudioBus from '../audio/AudioBus.js';
 import FeedbackDelay from '../audio/FeedbackDelay.js';
 import GranularAudioPlayer from '../audio/GranularAudioPlayer.js';
-// import SimpleAudioPlayer from '../audio/SimpleAudioPlayer.js';
-import NodeBufferLoader from '../audio/NodeBufferLoader.js';
+import { AudioBufferLoader } from '@ircam/sc-loader';
 
 import LED from './led.js';
 
@@ -26,7 +24,7 @@ import LED from './led.js';
 // helper function
 function bindStateUpdatesToAudioNode(state, namespace, node) {
   const regexp = new RegExp(`^${namespace}:`);
-  const schema = state.getSchema();
+  const schema = state.getDescription();
 
   state.onUpdate(updates => {
     for (let [name, value] of Object.entries(updates)) {
@@ -57,7 +55,7 @@ function bindStateUpdatesToAudioNode(state, namespace, node) {
 
 async function bootstrap() {
   const audioContext = new AudioContext();
-  const audioBufferLoader = new NodeBufferLoader(audioContext);
+  const audioBufferLoader = new AudioBufferLoader(audioContext);
   const scheduler = new Scheduler(() => audioContext.currentTime);
 
   const config = loadConfig(process.env.ENV, import.meta.url);
@@ -124,8 +122,8 @@ async function bootstrap() {
     if ('soundfile' in updates) {
       player.set({ loaded: false });
 
-      const arrayBuffer = await fs.readFile(path.join(process.cwd(), updates.soundfile));
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.buffer);
+      console.log(updates.soundfile);
+      const audioBuffer = await audioBufferLoader.load(path.join(process.cwd(), updates.soundfile));
       synthPlayer.buffer = audioBuffer;
 
       player.set({ loaded: true });
@@ -133,8 +131,7 @@ async function bootstrap() {
 
     if ('triggerFile' in updates) {
       const { url, volume } = updates.triggerFile;
-      const arrayBuffer = await fs.readFile(path.join(process.cwd(), url));
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.buffer);
+      const audioBuffer = await audioBufferLoader.load(path.join(process.cwd(), url));
 
       const gain = audioContext.createGain();
       gain.connect(master.input);

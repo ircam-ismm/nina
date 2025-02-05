@@ -4,12 +4,10 @@ import JSON5 from 'json5';
 
 import '@soundworks/helpers/polyfills.js';
 import { Server } from '@soundworks/core/server.js';
+import { loadConfig, configureHttpRouter } from '@soundworks/helpers/server.js';
 import filesystemPlugin from '@soundworks/plugin-filesystem/server.js';
 import platformInitPlugin from '@soundworks/plugin-platform-init/server.js';
 import syncPlugin from '@soundworks/plugin-sync/server.js';
-
-import { loadConfig } from '../utils/load-config.js';
-import '../utils/catch-unhandled-errors.js';
 
 import playerSchema from './schemas/player.js';
 import globalSchema from './schemas/global.js';
@@ -24,6 +22,7 @@ import GranularAudioPlayer from '../clients/audio/GranularAudioPlayer.js';
 // - Issue Tracker:         https://github.com/collective-soundworks/soundworks/issues
 // - Wizard & Tools:        `npx soundworks`
 
+
 const config = loadConfig(process.env.ENV, import.meta.url);
 
 console.log(`
@@ -37,12 +36,8 @@ console.log(`
 const configPath = path.join(process.cwd(), 'config.json');
 const { presets, labels, introFile } = JSON5.parse(fs.readFileSync(configPath));
 
-/**
- * Create the soundworks server
- */
 const server = new Server(config);
-// configure the server for usage within this application template
-server.useDefaultApplicationTemplate();
+configureHttpRouter(server);
 
 server.pluginManager.register('platform-init', platformInitPlugin);
 server.pluginManager.register('synth-filesystem', filesystemPlugin, {
@@ -91,10 +86,10 @@ for (let name in presets) {
  */
 await server.start();
 
-server.stateManager.registerSchema('global', globalSchema);
+server.stateManager.defineClass('global', globalSchema);
 const global = await server.stateManager.create('global', { labels, introFile });
 
-server.stateManager.registerSchema('player', playerSchema);
+server.stateManager.defineClass('player', playerSchema);
 const players = await server.stateManager.getCollection('player');
 
 // florward start stop to players state
