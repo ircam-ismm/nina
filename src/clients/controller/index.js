@@ -100,6 +100,8 @@ async function main($container) {
 
   const controllerView = {
     render() {
+      players.sort((a, b) => a.get('label') > b.get('label') ? 1 : -1);
+
       return html`
         <!-- intro -->
         <div style="height: 40px; width: 100%; position: relative">

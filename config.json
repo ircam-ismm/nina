@@ -1,21 +1,21 @@
 {
-  labels: {
-    'dotpi-dev-041': 'drum',
-    'dotpi-dev-052': 'voice',
-    'dotpi-dev-066': 'aaaaaa',
-    'dotpi-dev-032': 'bbbbbb',
-    'dotpi-dev-046': 'cccccc',
-    'dotpi-dev-073': 'dddddd',
-    'dotpi-dev-036': 'eeeeee',
-    'dotpi-dev-033': 'ffffff',
+  "labels": {
+    "dotpi-murmures-032": "032",
+    "dotpi-murmures-033": "033",
+    "dotpi-murmures-034": "034",
+    "dotpi-murmures-036": "036",
+    "dotpi-murmures-041": "041",
+    "dotpi-murmures-052": "052",
+    "dotpi-murmures-066": "066",
+    "dotpi-murmures-073": "073"
   },
-  presets: {
-    'audio-player:period': 0.05,
-    'audio-player:duration': 0.2,
-    'feedback-delay:preGain': 0,
-    'feedback-delay:delayTime': 0.1,
-    'feedback-delay:feedback': 0.5,
-    'feedback-delay:filterFrequency': 12000,
+  "presets": {
+    "audio-player:period": 0.05,
+    "audio-player:duration": 0.2,
+    "feedback-delay:preGain": 0,
+    "feedback-delay:delayTime": 0.1,
+    "feedback-delay:feedback": 0.5,
+    "feedback-delay:filterFrequency": 12000
   },
-  introFile: 'audio-files/intro/intro.wav',
+  "introFile": "audio-files/intro/intro.wav"
 }
