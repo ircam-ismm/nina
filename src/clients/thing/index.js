@@ -1,10 +1,10 @@
 import os from 'node:os';
-import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
 import { launcher, loadConfig } from '@soundworks/helpers/node.js';
+import ClientPluginMixing from '@soundworks/plugin-mixing/client.js';
 import { Scheduler } from '@ircam/sc-scheduling';
 import { AudioContext } from 'node-web-audio-api';
 
@@ -13,7 +13,7 @@ import FeedbackDelay from '../audio/FeedbackDelay.js';
 import GranularAudioPlayer from '../audio/GranularAudioPlayer.js';
 import { AudioBufferLoader } from '@ircam/sc-loader';
 
-import LED from './led.js';
+import Led from './Led.js';
 
 
 // - General documentation: https://soundworks.dev/
@@ -55,19 +55,22 @@ function bindStateUpdatesToAudioNode(state, namespace, node) {
 
 async function bootstrap() {
   const audioContext = new AudioContext();
-  const audioBufferLoader = new AudioBufferLoader(audioContext);
-  const scheduler = new Scheduler(() => audioContext.currentTime);
 
   const config = loadConfig(process.env.ENV, import.meta.url);
   const client = new Client(config);
-
   launcher.register(client);
+
+  client.pluginManager.register('mixing', ClientPluginMixing, {
+    role: 'track',
+    audioContext,
+  });
 
   await client.start();
 
-  // shared states
   const player = await client.stateManager.create('player', { id: client.id });
   const global = await client.stateManager.attach('global');
+
+  const mixing = await client.pluginManager.get('mixing');
 
   // set player label according to hostname
   const labels = global.get('labels');
@@ -79,6 +82,7 @@ async function bootstrap() {
 
     const label = labels[hostname];
     player.set({ label, hostname });
+    mixing.trackState.set({ label });
   } else {
     isEmulated = true;
     // DEV mode
@@ -88,12 +92,16 @@ async function bootstrap() {
     const label = labels[hostname];
 
     player.set({ label, hostname });
+    mixing.trackState.set({ label });
     console.log(`> DEV mode - hostname: ${hostname} - label: ${label}`);
   }
 
+  const audioBufferLoader = new AudioBufferLoader(audioContext);
+  const scheduler = new Scheduler(() => audioContext.currentTime);
+
   // audio chain
   const master = new AudioBus(audioContext);
-  master.connect(audioContext.destination);
+  master.connect(mixing.input);
 
   const mix = new AudioBus(audioContext);
   mix.connect(master.input);
@@ -106,7 +114,7 @@ async function bootstrap() {
   synthPlayer.connect(mix.input);
 
   // led
-  const led = new LED({ emulated: isEmulated, verbose: false });
+  const led = new Led({ emulated: isEmulated, verbose: false });
   led.init(audioContext, scheduler, master);
 
   global.onUpdate(updates => {

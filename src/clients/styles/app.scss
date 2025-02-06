@@ -15,6 +15,7 @@ html, body {
   min-height: 100vh;
   background-color: var(--sw-background-color);
   color: var(--sw-font-color);
+  margin: 0;
 }
 
 html {
@@ -66,27 +67,23 @@ simple-layout {
   }
 }
 
-/** default styles for controller layout */
-controller-layout {
+.controller {
   display: block;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 
-  & > div {
+  .row-1 {
     display: flex;
-    flex-direction: column;
 
-    .row-1 {
-      display: flex;
+    .col-1 {
+      width: 35%;
+      padding: 20px;
+    }
 
-      .col-1 {
-        width: 35%;
-        padding: 20px;
-      }
-
-      .col-2 {
-        width: 65%;
-        padding: 20px;
-      }
+    .col-2 {
+      width: 65%;
+      padding: 20px;
     }
 
     .trigger-files {
@@ -109,6 +106,17 @@ controller-layout {
     font-size: 12px;
     margin: 0;
     padding-left: 20px;
+  }
+
+  #mixing-wrapper {
+    position: absolute;
+    top: 30px;;
+    left: 0;
+    width: 100%;
+    padding: 6px;
+    background-color: #232323;
+    z-index: 200;
+    display: none;
   }
 }
 

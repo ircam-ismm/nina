@@ -26,6 +26,7 @@
     "@soundworks/core": "^5.0.0",
     "@soundworks/helpers": "^5.0.0",
     "@soundworks/plugin-filesystem": "^5.0.0",
+    "@soundworks/plugin-mixing": "^5.0.0-alpha.0",
     "@soundworks/plugin-platform-init": "^5.0.0",
     "@soundworks/plugin-sync": "^5.0.0",
     "json5": "^2.2.3",
