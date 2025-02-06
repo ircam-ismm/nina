@@ -31,7 +31,7 @@
     "@soundworks/plugin-sync": "^5.0.0",
     "json5": "^2.2.3",
     "lit": "^2.2.2",
-    "node-web-audio-api": "^0.21.0",
+    "node-web-audio-api": "^1.0.1",
     "tempy": "^3.1.0",
     "waves-loaders": "^0.1.6"
   },
