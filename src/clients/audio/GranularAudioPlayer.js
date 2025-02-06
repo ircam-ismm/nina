@@ -4,6 +4,7 @@ class GranularAudioPlayer {
       type: 'enum',
       list: ['start', 'stop'],
       default: 'stop',
+      filterChange: false,
     },
     period: {
       type: 'float',

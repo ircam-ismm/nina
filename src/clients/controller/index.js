@@ -86,18 +86,18 @@ async function main($container) {
   await client.start();
 
   const synthFilesystem = await client.pluginManager.get('synth-filesystem');
-  synthFilesystem.onUpdate(() => renderApp);
+  synthFilesystem.onUpdate(renderApp);
 
   const triggerFilesystem = await client.pluginManager.get('trigger-filesystem');
-  triggerFilesystem.onUpdate(() => renderApp);
+  triggerFilesystem.onUpdate(renderApp);
 
   const mixing = await client.pluginManager.get('mixing');
 
   const global = await client.stateManager.attach('global');
-  global.onUpdate(() => renderApp);
+  global.onUpdate(renderApp);
 
   const players = await client.stateManager.getCollection('player');
-  players.onChange(() => renderApp);
+  players.onChange(renderApp);
 
   function renderApp() {
     render(html`
@@ -144,14 +144,9 @@ async function main($container) {
           </div>
           <sc-transport
             style="height: 50px;"
-            .buttons=${['play', 'stop']}
-            .value=${global.get('audio-player:control') === 'start' ? 'play' : 'stop'}
-            @change=${e => {
-              const value = e.detail.value === 'play' ? 'start' : 'stop';
-              global.set({ 'audio-player:control': value })
-            }}
+            .buttons=${['start', 'stop']}
             @input=${e => {
-              console.log('input', e.detail.value)
+              players.set({ 'audio-player:control': e.detail.value })
             }}
           ></sc-transport>
 
@@ -160,9 +155,8 @@ async function main($container) {
           ${createInterfaceAndBindStateNamespaced(AudioBus.params, global, 'master')}
         </div>
         <div class="col-2">
-          ${repeat(Object.entries(global.get('labels')), ([hostname, label]) => hostname, ([hostname, label]) => {
+          ${repeat(Object.entries(global.get('labels')), ([hostname, _]) => hostname, ([hostname, label]) => {
             const player = players.find(p => p.get('hostname') === hostname);
-            const title = html`<sc-text style="width: 100px;">${label} (${hostname})</sc-text>`
 
             if (player) {
               return html`
@@ -178,11 +172,10 @@ async function main($container) {
                   ></sc-select>
                   <sc-status ?active=${player.get('loaded')}></sc-status>
                   <sc-transport
-                    .buttons=${['play', 'stop']}
-                    .value=${player.get('audio-player:control') === 'start' ? 'play' : 'stop'}
+                    .buttons=${['start', 'stop']}
+                    .value=${player.get('audio-player:control')}
                     @change=${e => {
-                      const value = e.detail.value === 'play' ? 'start' : 'stop';
-                      player.set({ 'audio-player:control': value })
+                      player.set({ 'audio-player:control': e.detail.value })
                     }}
                   ></sc-transport>
                   <sc-slider
