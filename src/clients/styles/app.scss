@@ -89,9 +89,13 @@ simple-layout {
         width: 200px;
       }
     }
+  }
 
-    .trigger-files {
-      padding: 20px;
+  .trigger-files {
+    padding: 20px;
+
+    sc-button {
+      width: 80px;
     }
   }
 
