@@ -14,16 +14,16 @@ export default {
     default: null,
     nullable: true,
   },
-  kill: {
-    type: 'boolean',
-    event: true,
-  },
   soundfile: {
     type: 'string',
     default: null,
     nullable: true,
   },
   loaded: {
+    type: 'boolean',
+    default: false,
+  },
+  applyFx: {
     type: 'boolean',
     default: false,
   },

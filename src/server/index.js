@@ -65,14 +65,19 @@ function assignNamespaced(target, src, namespace) {
 
 // extend player schema
 assignNamespaced(playerDescription, AudioBus.params, 'mix');
+assignNamespaced(playerDescription, GranularAudioPlayer.params, 'audio-player');
 playerDescription['audio-player:control'] = Object.assign({}, GranularAudioPlayer.params.control);
 
 // extend global schema
 assignNamespaced(globalDescription, GranularAudioPlayer.params, 'audio-player');
 assignNamespaced(globalDescription, FeedbackDelay.params, 'feedback-delay');
-assignNamespaced(globalDescription, AudioBus.params, 'master');
 
-// use defaults defined in presets
+/**
+ * Launch application (init plugins, http server, etc.)
+ */
+await server.start();
+
+// apply preset to default
 for (let name in presets) {
   if (playerDescription[name]) {
     playerDescription[name].default = presets[name];
@@ -83,26 +88,34 @@ for (let name in presets) {
   }
 }
 
-/**
- * Launch application (init plugins, http server, etc.)
- */
-await server.start();
-
 server.stateManager.defineClass('global', globalDescription);
 const global = await server.stateManager.create('global', { labels, introFile });
 
 server.stateManager.defineClass('player', playerDescription);
 const players = await server.stateManager.getCollection('player');
 
+// use defaults defined in presets
+function applyPreset() {
+  const playerDescription = players.getDescription();
+  const globalDescription = global.getDescription();
+
+  for (let name in presets) {
+    if (playerDescription[name]) {
+      players.set(name, presets[name]);
+    }
+
+    if (globalDescription[name]) {
+      global.set(name, presets[name]);
+    }
+  }
+}
+
+applyPreset();
+
 // forward start and stop to players state
 global.onUpdate(updates => {
-  if ('audio-player:control' in updates) {
-    const value = updates['audio-player:control'];
-    players.set({ 'audio-player:control': value });
-  }
-
   if ('reset' in updates) {
-    global.set(presets);
+    applyPreset();
   }
 });
 

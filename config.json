@@ -10,8 +10,9 @@
     "dotpi-murmures-073": "073"
   },
   "presets": {
-    "audio-player:period": 0.05,
-    "audio-player:duration": 0.2,
+    "audio-player:period": 0.1,
+    "audio-player:duration": 0.25,
+    "feedback-delay:directSound": 1,
     "feedback-delay:preGain": 0,
     "feedback-delay:delayTime": 0.1,
     "feedback-delay:feedback": 0.5,

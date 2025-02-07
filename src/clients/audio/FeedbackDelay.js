@@ -2,6 +2,12 @@ import AudioParam from './AudioParam.js';
 
 class FeedbackDelay {
   static params = {
+    directSound: {
+      type: 'float',
+      min: 0,
+      max: 1,
+      default: 1.,
+    },
     preGain: {
       type: 'float',
       min: 0,
@@ -30,6 +36,7 @@ class FeedbackDelay {
 
   constructor(context, {
     maxDelayTime = 1,
+    directSound = 1,
     delayTime = 0.1,
     preGain = 0.8,
     feedback = 0.8,
@@ -37,7 +44,10 @@ class FeedbackDelay {
   } = {}) {
     this.context = context;
 
+    this._output = this.context.createGain();
+
     this._filter = this.context.createBiquadFilter();
+    this._filter.connect(this._output);
 
     this._delay = this.context.createDelay(maxDelayTime);
     this._delay.connect(this._filter);
@@ -49,7 +59,17 @@ class FeedbackDelay {
     this._preGain = this.context.createGain();
     this._preGain.connect(this._delay);
 
+    this._directSound = this.context.createGain();
+    this._directSound.connect(this._output);
+
+    this._input = this.context.createGain();
+    this._input.connect(this._directSound);
+    this._input.connect(this._preGain);
+
     // expose params
+    this.directSound = new AudioParam(this._directSound.gain);
+    this.directSound.value = directSound;
+
     this.preGain = new AudioParam(this._preGain.gain);
     this.preGain.value = preGain;
 
@@ -64,15 +84,15 @@ class FeedbackDelay {
   }
 
   get input() {
-    return this._preGain;
+    return this._input;
   }
 
   connect(dest) {
-    this._filter.connect(dest);
+    this._output.connect(dest);
   }
 
   disconnect(dest) {
-    this._filter.disconnect(dest);
+    this._output.disconnect(dest);
   }
 }
 

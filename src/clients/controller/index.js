@@ -6,6 +6,7 @@ import ClientPluginMixing from '@soundworks/plugin-mixing/client.js';
 
 import { render, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+// import { live } from 'lit/directives/live.js';
 
 import AudioBus from '../audio/AudioBus.js';
 import FeedbackDelay from '../audio/FeedbackDelay.js';
@@ -42,7 +43,7 @@ function createInterfaceAndBindStateNamespaced(params, state, namespace) {
           case 'boolean': {
             control = html`
               <sc-toggle
-                ?active=${state.get(stateKey)}
+                ?active=${'size' in state ? state.getDescription(stateKey).default : state.get(stateKey)}
                 @change=${e => state.set({ [stateKey]: e.detail.value })}
               ></sc-toggle>
             `
@@ -54,7 +55,7 @@ function createInterfaceAndBindStateNamespaced(params, state, namespace) {
               <sc-slider
                 min=${param.min}
                 max=${param.max}
-                value=${state.get(stateKey)}
+                value=${'size' in state ? state.getDescription(stateKey).default : state.get(stateKey)}
                 number-box
                 @input=${e => state.set({ [stateKey]: e.detail.value })}
               ></sc-slider>
@@ -102,6 +103,7 @@ async function main($container) {
   console.log(global.getValues());
 
   function renderApp() {
+    console.log()
     render(html`
       <!-- intro -->
       <div style="height: 40px; width: 100%; position: relative">
@@ -152,9 +154,35 @@ async function main($container) {
             }}
           ></sc-transport>
 
-          ${createInterfaceAndBindStateNamespaced(GranularAudioPlayer.params, global, 'audio-player')}
+          <div>
+            <sc-text style="width: 120px";>period</sc-text>
+            <sc-slider
+              min=${global.getDescription('audio-player:period').min}
+              max=${global.getDescription('audio-player:period').max}
+              number-box
+              value=${global.get('audio-player:period')}
+              @input=${e => {
+                global.set('audio-player:period', e.detail.value)
+                players.set('audio-player:period', e.detail.value)
+              }}
+            ></sc-slider>
+          </div>
+          <div>
+            <sc-text style="width: 120px";>duration</sc-text>
+            <sc-slider
+              min=${players.getDescription('audio-player:duration').min}
+              max=${players.getDescription('audio-player:duration').max}
+              number-box
+              value=${global.get('audio-player:duration')}
+              @input=${e => {
+                global.set('audio-player:duration', e.detail.value)
+                players.set('audio-player:duration', e.detail.value)
+              }}
+            ></sc-slider>
+          </div>
+
+          ${createInterfaceAndBindStateNamespaced(GranularAudioPlayer.params, players, 'audio-player')}
           ${createInterfaceAndBindStateNamespaced(FeedbackDelay.params, global, 'feedback-delay')}
-          ${createInterfaceAndBindStateNamespaced(AudioBus.params, global, 'master')}
         </div>
         <div class="col-2">
           ${repeat(Object.entries(global.get('labels')), ([hostname, _]) => hostname, ([hostname, label]) => {
@@ -186,10 +214,29 @@ async function main($container) {
                     value=${player.get('mix:volume')}
                     @input=${e => player.set({ 'mix:volume': e.detail.value })}
                   ></sc-slider>
-                  <sc-text style="width: 90px;">restart app</sc-text>
-                  <sc-bang
-                    @input=${e => player.set({ kill: true })}
-                  ></sc-bang>
+
+                  <sc-text style="width: 30px";>fx</sc-text>
+                  <sc-toggle
+                    ?active=${player.get('applyFx')}
+                    @change=${e => player.set('applyFx', e.detail.value)}
+                  ></sc-toggle>
+
+                  <sc-text style="width: 60px";>period</sc-text>
+                  <sc-slider
+                    min=${player.getDescription('audio-player:period').min}
+                    max=${player.getDescription('audio-player:period').max}
+                    number-box
+                    value=${player.get('audio-player:period')}
+                    @input=${e => player.set('audio-player:period', e.detail.value)}
+                  ></sc-slider>
+                  <sc-text style="width: 60px";>duration</sc-text>
+                  <sc-slider
+                    min=${player.getDescription('audio-player:duration').min}
+                    max=${player.getDescription('audio-player:duration').max}
+                    number-box
+                    value=${player.get('audio-player:duration')}
+                    @input=${e => player.set('audio-player:duration', e.detail.value)}
+                  ></sc-slider>
                 </div>
               `
             } else {

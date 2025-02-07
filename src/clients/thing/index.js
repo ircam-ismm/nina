@@ -99,23 +99,28 @@ async function bootstrap() {
   const audioBufferLoader = new AudioBufferLoader(audioContext);
   const scheduler = new Scheduler(() => audioContext.currentTime);
 
-  // audio chain
-  const master = new AudioBus(audioContext);
-  master.connect(mixing.input);
-
   const mix = new AudioBus(audioContext);
-  mix.connect(master.input);
+  mix.connect(mixing.input);
 
   const feedbackDelay = new FeedbackDelay(audioContext);
   feedbackDelay.connect(mix.input);
 
+  const wet = audioContext.createGain();
+  wet.gain.value = player.get('applyFx') ? 1 : 0;
+  wet.connect(feedbackDelay.input);
+
+  const dry = audioContext.createGain();
+  dry.gain.value = player.get('applyFx') ? 0 : 1;
+  dry.connect(mix.input);
+
   const synthPlayer = new GranularAudioPlayer(audioContext, scheduler);
-  synthPlayer.connect(feedbackDelay.input);
-  synthPlayer.connect(mix.input);
+  synthPlayer.connect(wet);
+  synthPlayer.connect(dry);
+  // synthPlayer.connect(mix.input); // direct
 
   // led
   const led = new Led({ emulated: isEmulated, verbose: false });
-  led.init(audioContext, scheduler, master);
+  led.init(audioContext, scheduler, mix);
 
   global.onUpdate(updates => {
     if ('ledBaseColor' in updates) {
@@ -127,42 +132,45 @@ async function bootstrap() {
   }, true);
 
   player.onUpdate(async updates => {
-    console.log(updates);
-    if ('soundfile' in updates) {
-      player.set({ loaded: false });
+    for (let [key, value] of Object.entries(updates)) {
+      switch (key) {
+        case 'soundfile': {
+          player.set({ loaded: false });
+          const audioBuffer = await audioBufferLoader.load(path.join(process.cwd(), updates.soundfile));
+          synthPlayer.buffer = audioBuffer;
+          player.set({ loaded: true });
+          break;
+        }
+        case 'triggerFile': {
+          const { url, volume } = updates.triggerFile;
+          const audioBuffer = await audioBufferLoader.load(path.join(process.cwd(), url));
 
-      console.log(updates.soundfile);
-      const audioBuffer = await audioBufferLoader.load(path.join(process.cwd(), updates.soundfile));
-      synthPlayer.buffer = audioBuffer;
+          const gain = audioContext.createGain();
+          gain.connect(mix.input);
+          gain.gain.value = volume;
 
-      player.set({ loaded: true });
-    }
-
-    if ('triggerFile' in updates) {
-      const { url, volume } = updates.triggerFile;
-      const audioBuffer = await audioBufferLoader.load(path.join(process.cwd(), url));
-
-      const gain = audioContext.createGain();
-      gain.connect(master.input);
-      gain.gain.value = volume;
-
-      const src = audioContext.createBufferSource();
-      src.connect(gain);
-      src.buffer = audioBuffer;
-      src.start();
-    }
-
-    if ('kill' in updates) {
-      await client.stop();
+          const src = audioContext.createBufferSource();
+          src.connect(gain);
+          src.buffer = audioBuffer;
+          src.start();
+          break;
+        }
+        case 'applyFx': {
+          const now = audioContext.currentTime;
+          dry.gain.setValueAtTime(value ? 1 : 0, now);
+          dry.gain.linearRampToValueAtTime(value ? 0 : 1, now + 0.1);
+          wet.gain.setValueAtTime(value ? 0 : 1, now);
+          wet.gain.linearRampToValueAtTime(value ? 1 : 0, now + 0.1);
+          break;
+        }
+      }
     }
   });
 
   bindStateUpdatesToAudioNode(player, 'audio-player', synthPlayer);
   bindStateUpdatesToAudioNode(player, 'mix', mix);
 
-  bindStateUpdatesToAudioNode(global, 'audio-player', synthPlayer);
   bindStateUpdatesToAudioNode(global, 'feedback-delay', feedbackDelay);
-  bindStateUpdatesToAudioNode(global, 'master', master);
 }
 
 // The launcher allows to fork multiple clients in the same terminal window

@@ -77,13 +77,17 @@ simple-layout {
     display: flex;
 
     .col-1 {
-      width: 35%;
+      width: 25%;
       padding: 20px;
     }
 
     .col-2 {
-      width: 65%;
+      width: 75%;
       padding: 20px;
+
+      sc-slider {
+        width: 200px;
+      }
     }
 
     .trigger-files {
