@@ -30,4 +30,9 @@ export default {
     min: 0,
     max: 1,
   },
+  // only for control
+  applyFx: {
+    type: 'boolean',
+    default: false,
+  }
 };

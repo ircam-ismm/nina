@@ -154,7 +154,7 @@ async function main($container) {
             }}
           ></sc-transport>
 
-          <div>
+          <div style="margin: 20px 0 4px">
             <sc-text style="width: 120px";>period</sc-text>
             <sc-slider
               min=${global.getDescription('audio-player:period').min}
@@ -167,7 +167,7 @@ async function main($container) {
               }}
             ></sc-slider>
           </div>
-          <div>
+          <div style="margin: 4px 0">
             <sc-text style="width: 120px";>duration</sc-text>
             <sc-slider
               min=${players.getDescription('audio-player:duration').min}
@@ -181,7 +181,16 @@ async function main($container) {
             ></sc-slider>
           </div>
 
-          ${createInterfaceAndBindStateNamespaced(GranularAudioPlayer.params, players, 'audio-player')}
+          <div style="padding-top: 10px; margin-top: 10px; border-top: 1px solid #454545">
+            <sc-text style="width: 120px;">fx</sc-text>
+            <sc-toggle
+              @change=${e => {
+                global.set('applyFx', e.detail.value)
+                players.set('applyFx', e.detail.value)
+              }}
+            ></sc-toggle>
+          </div>
+
           ${createInterfaceAndBindStateNamespaced(FeedbackDelay.params, global, 'feedback-delay')}
         </div>
         <div class="col-2">
