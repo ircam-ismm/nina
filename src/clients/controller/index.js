@@ -99,6 +99,8 @@ async function main($container) {
   const players = await client.stateManager.getCollection('player');
   players.onChange(renderApp);
 
+  console.log(global.getValues());
+
   function renderApp() {
     render(html`
       <!-- intro -->
@@ -174,7 +176,7 @@ async function main($container) {
                   <sc-transport
                     .buttons=${['start', 'stop']}
                     .value=${player.get('audio-player:control')}
-                    @change=${e => {
+                    @input=${e => {
                       player.set({ 'audio-player:control': e.detail.value })
                     }}
                   ></sc-transport>

@@ -21,8 +21,8 @@ class GranularAudioPlayer {
   };
 
   constructor(context, scheduler, {
-    period = 0.02,
-    duration = 0.1,
+    period = 0.1,
+    duration = 0.25,
   } = {}) {
     this.context = context;
 
@@ -32,6 +32,7 @@ class GranularAudioPlayer {
     this.duration = duration;
     this.position = 0;
     this._buffer = null;
+    this._nextBuffer = null;
 
     this._output = this.context.createGain();
 
@@ -44,8 +45,7 @@ class GranularAudioPlayer {
   }
 
   set buffer(buffer) {
-    this._buffer = buffer;
-    this.position = 0;
+    this._nextBuffer = buffer;
   }
 
   connect(dest) {
@@ -57,6 +57,9 @@ class GranularAudioPlayer {
   }
 
   start() {
+    this._buffer = this._nextBuffer;
+    this.position = 0;
+
     if (!this.buffer) {
       console.log('[GranularAudioPlayer] no buffer set, abort start');
       return;

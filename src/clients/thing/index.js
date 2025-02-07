@@ -127,6 +127,7 @@ async function bootstrap() {
   }, true);
 
   player.onUpdate(async updates => {
+    console.log(updates);
     if ('soundfile' in updates) {
       player.set({ loaded: false });
 
