@@ -184,6 +184,7 @@ async function main($container) {
           <div style="padding-top: 10px; margin-top: 10px; border-top: 1px solid #454545">
             <sc-text style="width: 120px;">fx</sc-text>
             <sc-toggle
+              midi-mode="latch"
               @change=${e => {
                 global.set('applyFx', e.detail.value)
                 players.set('applyFx', e.detail.value)
@@ -226,6 +227,7 @@ async function main($container) {
 
                   <sc-text style="width: 30px";>fx</sc-text>
                   <sc-toggle
+                    midi-mode="momentary"
                     ?active=${player.get('applyFx')}
                     @change=${e => player.set('applyFx', e.detail.value)}
                   ></sc-toggle>
