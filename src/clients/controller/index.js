@@ -227,7 +227,7 @@ async function main($container) {
 
                   <sc-text style="width: 30px";>fx</sc-text>
                   <sc-toggle
-                    midi-mode="momentary"
+                    midi-mode="latch"
                     ?active=${player.get('applyFx')}
                     @change=${e => player.set('applyFx', e.detail.value)}
                   ></sc-toggle>
