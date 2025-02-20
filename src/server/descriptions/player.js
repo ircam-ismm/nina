@@ -28,7 +28,11 @@ export default {
     default: false,
   },
   triggerFile: {
-    type: 'any',
+    type: 'any', // { url, volume }
+    event: true,
+  },
+  triggerVolume: {
+    type: 'any', // { url, volume
     event: true,
   },
 };

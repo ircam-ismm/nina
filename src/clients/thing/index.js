@@ -12,6 +12,7 @@ import AudioBus from '../audio/AudioBus.js';
 import FeedbackDelay from '../audio/FeedbackDelay.js';
 import GranularAudioPlayer from '../audio/GranularAudioPlayer.js';
 import { AudioBufferLoader } from '@ircam/sc-loader';
+import { decibelToLinear } from '@ircam/sc-utils';
 
 import Led from './Led.js';
 
@@ -122,6 +123,8 @@ async function bootstrap() {
   const led = new Led({ emulated: isEmulated, verbose: false });
   led.init(audioContext, scheduler, mix);
 
+  const triggerGains = new Map();
+
   global.onUpdate(updates => {
     if ('ledBaseColor' in updates) {
       led.baseColor = updates.ledBaseColor;
@@ -145,14 +148,34 @@ async function bootstrap() {
           const { url, volume } = updates.triggerFile;
           const audioBuffer = await audioBufferLoader.load(path.join(process.cwd(), url));
 
-          const gain = audioContext.createGain();
-          gain.connect(mix.input);
-          gain.gain.value = volume;
+          if (!triggerGains.has(url)) {
+            const gain = audioContext.createGain();
+            gain.connect(mix.input);
+            gain.gain.value = decibelToLinear(volume);
+            triggerGains.set(url, gain);
+          }
+
+          const gain = triggerGains.get(url);
+          gain.gain.setTargetAtTime(decibelToLinear(volume), audioContext.currentTime, 0.03);
 
           const src = audioContext.createBufferSource();
           src.connect(gain);
           src.buffer = audioBuffer;
           src.start();
+          break;
+        }
+        case 'triggerVolume': {
+          const { url, volume } = updates.triggerVolume;
+
+          if (!triggerGains.has(url)) {
+            const gain = audioContext.createGain();
+            gain.connect(mix.input);
+            gain.gain.value = decibelToLinear(volume);
+            triggerGains.set(url, gain);
+          } else {
+            const gain = triggerGains.get(url);
+            gain.gain.setTargetAtTime(decibelToLinear(volume), audioContext.currentTime, 0.03);
+          }
           break;
         }
         case 'applyFx': {

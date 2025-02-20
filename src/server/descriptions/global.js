@@ -34,5 +34,5 @@ export default {
   applyFx: {
     type: 'boolean',
     default: false,
-  }
+  },
 };

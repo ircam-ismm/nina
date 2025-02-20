@@ -266,14 +266,20 @@ async function main($container) {
           return html`
             <div style="display: flex; margin-bottom: 2px;">
               <sc-text>${name}</sc-text>
-              <sc-slider class="volume" min="0" max="1" value="1"></sc-slider>
+              <sc-slider
+                class="volume"
+                min="-80"
+                max="12"
+                value="0"
+                @input=${e => players.set('triggerVolume', { url, volume: e.detail.value })}
+              ></sc-slider>
 
               ${players.map(player => {
                 return html`
                   <sc-button
                     @input=${e => {
                       const volume = e.target.parentNode.querySelector('.volume').value;
-                      player.set({ triggerFile: { url, volume }  })
+                      player.set('triggerFile', { url, volume });
                     }}
                   >${player.get('label')}</sc-button>
                 `;
@@ -281,7 +287,7 @@ async function main($container) {
               <sc-bang
                 @input=${e => {
                   const volume = e.target.parentNode.querySelector('.volume').value;
-                  players.set({ triggerFile: { url, volume } })
+                  players.set('triggerFile', { url, volume });
                 }}
               ></sc-bang>
 
