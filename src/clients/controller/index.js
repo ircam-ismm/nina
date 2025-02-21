@@ -121,7 +121,7 @@ async function main($container) {
           ></sc-slider>
           <sc-midi></sc-midi>
           <sc-icon
-            type="gear"
+            type="slider"
             @click=${e => {
               const target = document.querySelector('#mixing-wrapper')
               target.style.display = target.style.display !== 'block' ? 'block' : 'none';
