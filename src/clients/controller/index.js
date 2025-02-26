@@ -131,6 +131,7 @@ async function main($container) {
         <div style="position: absolute; top: 0; right: 2px;">
           <sc-text>${global.get('introFile')}</sc-text>
           <sc-transport value=${global.get('introPlayingState')} buttons=${JSON.stringify(['play', 'stop'])}
+            id="global-intro-transport"
             @change=${e => global.set({ introPlayingState: e.detail.value })}
           ></sc-transport>
         </div>
@@ -147,6 +148,7 @@ async function main($container) {
             >Reset</sc-button>
           </div>
           <sc-transport
+            id="global-audio-player-transport"
             style="height: 50px;"
             .buttons=${['start', 'stop']}
             @input=${e => {
@@ -157,6 +159,7 @@ async function main($container) {
           <div style="margin: 20px 0 4px">
             <sc-text style="width: 120px";>period</sc-text>
             <sc-slider
+              id="global-audio-player-period"
               min=${global.getDescription('audio-player:period').min}
               max=${global.getDescription('audio-player:period').max}
               number-box
@@ -170,6 +173,7 @@ async function main($container) {
           <div style="margin: 4px 0">
             <sc-text style="width: 120px";>duration</sc-text>
             <sc-slider
+              id="global-audio-player-duration"
               min=${players.getDescription('audio-player:duration').min}
               max=${players.getDescription('audio-player:duration').max}
               number-box
@@ -184,6 +188,7 @@ async function main($container) {
           <div style="padding-top: 10px; margin-top: 10px; border-top: 1px solid #454545">
             <sc-text style="width: 120px;">fx</sc-text>
             <sc-toggle
+              id="global-audio-player-apply-fx"
               midi-mode="latch"
               @change=${e => {
                 global.set('applyFx', e.detail.value)
@@ -212,6 +217,7 @@ async function main($container) {
                   ></sc-select>
                   <sc-status ?active=${player.get('loaded')}></sc-status>
                   <sc-transport
+                    id="${hostname}-audio-player-transport"
                     .buttons=${['start', 'stop']}
                     .value=${player.get('audio-player:control')}
                     @input=${e => {
@@ -219,6 +225,7 @@ async function main($container) {
                     }}
                   ></sc-transport>
                   <sc-slider
+                    id="${hostname}-audio-player-volume"
                     min=${AudioBus.params.volume.min}
                     max=${AudioBus.params.volume.max}
                     value=${player.get('mix:volume')}
@@ -227,6 +234,7 @@ async function main($container) {
 
                   <sc-text style="width: 30px";>fx</sc-text>
                   <sc-toggle
+                    id="${hostname}-audio-player-apply-fx"
                     midi-mode="latch"
                     ?active=${player.get('applyFx')}
                     @change=${e => player.set('applyFx', e.detail.value)}
@@ -234,6 +242,7 @@ async function main($container) {
 
                   <sc-text style="width: 60px";>period</sc-text>
                   <sc-slider
+                    id="${hostname}-audio-player-period"
                     min=${player.getDescription('audio-player:period').min}
                     max=${player.getDescription('audio-player:period').max}
                     number-box
@@ -242,6 +251,7 @@ async function main($container) {
                   ></sc-slider>
                   <sc-text style="width: 60px";>duration</sc-text>
                   <sc-slider
+                    id="${hostname}-audio-player-volume"
                     min=${player.getDescription('audio-player:duration').min}
                     max=${player.getDescription('audio-player:duration').max}
                     number-box
@@ -267,6 +277,7 @@ async function main($container) {
             <div style="display: flex; margin-bottom: 2px;">
               <sc-text>${name}</sc-text>
               <sc-slider
+                id="${name}-trigger-volume"
                 class="volume"
                 min="-80"
                 max="12"
