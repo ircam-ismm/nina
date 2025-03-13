@@ -251,7 +251,7 @@ async function main($container) {
                   ></sc-slider>
                   <sc-text style="width: 60px";>duration</sc-text>
                   <sc-slider
-                    id="${hostname}-audio-player-volume"
+                    id="${hostname}-audio-player-duration"
                     min=${player.getDescription('audio-player:duration').min}
                     max=${player.getDescription('audio-player:duration').max}
                     number-box
