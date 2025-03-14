@@ -148,9 +148,9 @@ async function bootstrap() {
           synthPlayer.buffer = audioBuffer;
           thing.set({ loaded: true });
 
-          if (updates.playOnLoad === true && updates['audio-player:control'] === 'start') {
-            synthPlayer.start();
-          }
+          // if (updates.playOnLoad === true && updates['audio-player:control'] === 'start') {
+          //   synthPlayer.start();
+          // }
           break;
         }
         case 'triggerFile': {
