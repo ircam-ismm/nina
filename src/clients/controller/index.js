@@ -6,12 +6,9 @@ import ClientPluginMixing from '@soundworks/plugin-mixing/client.js';
 
 import { render, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-// import { live } from 'lit/directives/live.js';
 
 import AudioBus from '../audio/AudioBus.js';
 import FeedbackDelay from '../audio/FeedbackDelay.js';
-// import Overdrive from '../audio/Overdrive.js';
-import GranularAudioPlayer from '../audio/GranularAudioPlayer.js';
 
 import '@ircam/sc-components';
 import '@soundworks/plugin-mixing/components.js';
@@ -97,16 +94,15 @@ async function main($container) {
   const global = await client.stateManager.attach('global');
   global.onUpdate(renderApp);
 
-  const players = await client.stateManager.getCollection('player');
-  players.onChange(renderApp);
+  const things = await client.stateManager.getCollection('thing');
+  things.onChange(renderApp);
 
   console.log(global.getValues());
 
   function renderApp() {
-    console.log()
     render(html`
       <!-- intro -->
-      <div style="height: 40px; width: 100%; position: relative">
+      <header>
         <div>
           <sc-text style="width: 100px;">LED</sc-text>
           <sc-color-picker
@@ -127,15 +123,14 @@ async function main($container) {
               target.style.display = target.style.display !== 'block' ? 'block' : 'none';
             }}
           ></sc-icon>
-        </div>
-        <div style="position: absolute; top: 0; right: 2px;">
           <sc-text>${global.get('introFile')}</sc-text>
           <sc-transport value=${global.get('introPlayingState')} buttons=${JSON.stringify(['play', 'stop'])}
             id="global-intro-transport"
             @change=${e => global.set({ introPlayingState: e.detail.value })}
           ></sc-transport>
         </div>
-      </div>
+        <sw-audit .client="${client}"></sw-audit>
+      </header>
       <div id="mixing-wrapper">
         <sw-plugin-mixing .plugin=${mixing}></sw-plugin-mixing>
       </div>
@@ -152,12 +147,12 @@ async function main($container) {
             style="height: 50px;"
             .buttons=${['start', 'stop']}
             @input=${e => {
-              players.set({ 'audio-player:control': e.detail.value })
+              things.set({ 'audio-player:control': e.detail.value })
             }}
           ></sc-transport>
 
           <div style="margin: 20px 0 4px">
-            <sc-text style="width: 120px";>period</sc-text>
+            <sc-text style="width: 120px;">period</sc-text>
             <sc-slider
               id="global-audio-player-period"
               min=${global.getDescription('audio-player:period').min}
@@ -166,21 +161,21 @@ async function main($container) {
               value=${global.get('audio-player:period')}
               @input=${e => {
                 global.set('audio-player:period', e.detail.value)
-                players.set('audio-player:period', e.detail.value)
+                things.set('audio-player:period', e.detail.value)
               }}
             ></sc-slider>
           </div>
           <div style="margin: 4px 0">
-            <sc-text style="width: 120px";>duration</sc-text>
+            <sc-text style="width: 120px;">duration</sc-text>
             <sc-slider
               id="global-audio-player-duration"
-              min=${players.getDescription('audio-player:duration').min}
-              max=${players.getDescription('audio-player:duration').max}
+              min=${things.getDescription('audio-player:duration').min}
+              max=${things.getDescription('audio-player:duration').max}
               number-box
               value=${global.get('audio-player:duration')}
               @input=${e => {
                 global.set('audio-player:duration', e.detail.value)
-                players.set('audio-player:duration', e.detail.value)
+                things.set('audio-player:duration', e.detail.value)
               }}
             ></sc-slider>
           </div>
@@ -192,7 +187,7 @@ async function main($container) {
               midi-mode="latch"
               @change=${e => {
                 global.set('applyFx', e.detail.value)
-                players.set('applyFx', e.detail.value)
+                things.set('applyFx', e.detail.value)
               }}
             ></sc-toggle>
           </div>
@@ -200,12 +195,45 @@ async function main($container) {
           ${createInterfaceAndBindStateNamespaced(FeedbackDelay.params, global, 'feedback-delay')}
         </div>
         <div class="col-2">
+          <div class="presets-wrapper">
+            <sc-tab
+              .options=${global.get('thingsPresetList')}
+              value=${global.get('activeThingsPreset')}
+              @change=${e => global.set('activeThingsPreset', e.detail.value)}
+            ></sc-tab>
+            <div>
+              <sc-text
+                editable
+                value=${global.get('activeThingsPreset')}
+                placeholder="preset name"
+              ></sc-text>
+              <sc-icon
+                type="save"
+                @input=${e => {
+                  const $txt = e.currentTarget.previousElementSibling;
+                  const presetName = $txt.value.trim();
+                  if (presetName) {
+                    global.set({ saveThingsPreset: presetName });
+                  }
+                }}
+              ></sc-icon>
+              <sc-icon
+                type="close"
+                @input=${e => {
+                  if (confirm('delete preset?')) {
+                    global.set('deleteThingsPreset', global.get('activeThingsPreset'));
+                  }
+                }}
+              ></sc-icon>
+            </div>
+          </div>
+
           ${repeat(Object.entries(global.get('labels')), ([hostname, _]) => hostname, ([hostname, label]) => {
-            const player = players.find(p => p.get('hostname') === hostname);
+            const player = things.find(p => p.get('hostname') === hostname);
 
             if (player) {
               return html`
-                <div style="padding: 16px 0; border-bottom: 1px solid #787878;">
+                <div class="thing-controls">
                   <sc-text style="width: 140px;">${label} (${hostname})</sc-text>
                   <sc-status active></sc-status>
                   <sc-select
@@ -232,7 +260,7 @@ async function main($container) {
                     @input=${e => player.set({ 'mix:volume': e.detail.value })}
                   ></sc-slider>
 
-                  <sc-text style="width: 30px";>fx</sc-text>
+                  <sc-text style="width: 30px;">fx</sc-text>
                   <sc-toggle
                     id="${hostname}-audio-player-apply-fx"
                     midi-mode="latch"
@@ -240,7 +268,7 @@ async function main($container) {
                     @change=${e => player.set('applyFx', e.detail.value)}
                   ></sc-toggle>
 
-                  <sc-text style="width: 60px";>period</sc-text>
+                  <sc-text style="width: 60px;">period</sc-text>
                   <sc-slider
                     id="${hostname}-audio-player-period"
                     min=${player.getDescription('audio-player:period').min}
@@ -249,7 +277,7 @@ async function main($container) {
                     value=${player.get('audio-player:period')}
                     @input=${e => player.set('audio-player:period', e.detail.value)}
                   ></sc-slider>
-                  <sc-text style="width: 60px";>duration</sc-text>
+                  <sc-text style="width: 60px;">duration</sc-text>
                   <sc-slider
                     id="${hostname}-audio-player-duration"
                     min=${player.getDescription('audio-player:duration').min}
@@ -262,7 +290,7 @@ async function main($container) {
               `
             } else {
               return html`
-                <div style="padding: 16px 0; border-bottom: 1px solid #787878;">
+                <div class="thing-controls">
                   <sc-text style="width: 140px;">${label} (${hostname})</sc-text>
                   <sc-status></sc-status>
                 </div>
@@ -282,10 +310,10 @@ async function main($container) {
                 min="-80"
                 max="12"
                 value="0"
-                @input=${e => players.set('triggerVolume', { url, volume: e.detail.value })}
+                @input=${e => things.set('triggerVolume', { url, volume: e.detail.value })}
               ></sc-slider>
 
-              ${players.map(player => {
+              ${things.map(player => {
                 return html`
                   <sc-button
                     @input=${e => {
@@ -298,7 +326,7 @@ async function main($container) {
               <sc-bang
                 @input=${e => {
                   const volume = e.target.parentNode.querySelector('.volume').value;
-                  players.set('triggerFile', { url, volume });
+                  things.set('triggerFile', { url, volume });
                 }}
               ></sc-bang>
 

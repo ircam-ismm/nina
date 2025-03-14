@@ -35,4 +35,23 @@ export default {
     type: 'boolean',
     default: false,
   },
+
+  // presets
+  activeThingsPreset: {
+    type: 'string',
+    default: null,
+    nullable: true,
+  },
+  saveThingsPreset: {
+    type: 'string',
+    event: true,
+  },
+  deleteThingsPreset: {
+    type: 'string',
+    event: true,
+  },
+  thingsPresetList: {
+    type: 'any',
+    default: {},
+  },
 };

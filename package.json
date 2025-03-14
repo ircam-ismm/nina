@@ -25,6 +25,7 @@
     "@ircam/sc-utils": "^1.3.0",
     "@soundworks/core": "^5.0.0",
     "@soundworks/helpers": "^5.0.0",
+    "@soundworks/plugin-checkin": "^5.0.0",
     "@soundworks/plugin-filesystem": "^5.0.0",
     "@soundworks/plugin-mixing": "^5.0.0-alpha.0",
     "@soundworks/plugin-platform-init": "^5.0.0",

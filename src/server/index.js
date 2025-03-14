@@ -9,9 +9,12 @@ import ServerPluginFilesystem from '@soundworks/plugin-filesystem/server.js';
 import ServerPluginPlatformInit from '@soundworks/plugin-platform-init/server.js';
 import ServerPluginSync from '@soundworks/plugin-sync/server.js';
 import ServerPluginMixing from '@soundworks/plugin-mixing/server.js';
+import ServerPluginCheckin from '@soundworks/plugin-checkin/server.js';
 
-import playerDescription from './descriptions/player.js';
+import thingDescription from './descriptions/thing.js';
 import globalDescription from './descriptions/global.js';
+
+import dbMapper from './dbMapper.js';
 
 import AudioBus from '../clients/audio/AudioBus.js';
 import FeedbackDelay from '../clients/audio/FeedbackDelay.js';
@@ -53,8 +56,15 @@ server.pluginManager.register('intro-filesystem', ServerPluginFilesystem, {
   dirname: 'audio-files/intro',
   publicPath: 'audio-files/intro',
 });
+server.pluginManager.register('things-presets', ServerPluginFilesystem, {
+  dirname: 'things-presets',
+});
 server.pluginManager.register('sync', ServerPluginSync);
 server.pluginManager.register('mixing', ServerPluginMixing);
+// for dev purposes
+server.pluginManager.register('checkin', ServerPluginCheckin, {
+  capacity: Object.keys(labels).length,
+});
 
 // extend player schema with audio controls
 function assignNamespaced(target, src, namespace) {
@@ -64,9 +74,9 @@ function assignNamespaced(target, src, namespace) {
 }
 
 // extend player schema
-assignNamespaced(playerDescription, AudioBus.params, 'mix');
-assignNamespaced(playerDescription, GranularAudioPlayer.params, 'audio-player');
-playerDescription['audio-player:control'] = Object.assign({}, GranularAudioPlayer.params.control);
+assignNamespaced(thingDescription, AudioBus.params, 'mix');
+assignNamespaced(thingDescription, GranularAudioPlayer.params, 'audio-player');
+thingDescription['audio-player:control'] = Object.assign({}, GranularAudioPlayer.params.control);
 
 // extend global schema
 assignNamespaced(globalDescription, GranularAudioPlayer.params, 'audio-player');
@@ -79,8 +89,8 @@ await server.start();
 
 // apply preset to default
 for (let name in presets) {
-  if (playerDescription[name]) {
-    playerDescription[name].default = presets[name];
+  if (thingDescription[name]) {
+    thingDescription[name].default = presets[name];
   }
 
   if (globalDescription[name]) {
@@ -91,17 +101,17 @@ for (let name in presets) {
 server.stateManager.defineClass('global', globalDescription);
 const global = await server.stateManager.create('global', { labels, introFile });
 
-server.stateManager.defineClass('player', playerDescription);
-const players = await server.stateManager.getCollection('player');
+server.stateManager.defineClass('thing', thingDescription);
+const things = await server.stateManager.getCollection('thing');
 
 // use defaults defined in presets
-function applyPreset() {
-  const playerDescription = players.getDescription();
+function applyGlobalPreset() {
+  const thingDescription = things.getDescription();
   const globalDescription = global.getDescription();
 
   for (let name in presets) {
-    if (playerDescription[name]) {
-      players.set(name, presets[name]);
+    if (thingDescription[name]) {
+      things.set(name, presets[name]);
     }
 
     if (globalDescription[name]) {
@@ -110,16 +120,51 @@ function applyPreset() {
   }
 }
 
-applyPreset();
-
-// forward start and stop to players state
-global.onUpdate(updates => {
-  if ('reset' in updates) {
-    applyPreset();
-  }
-});
+applyGlobalPreset();
 
 const sync = await server.pluginManager.get('sync');
+const thingPresetsFilesystem = await server.pluginManager.get('things-presets');
+dbMapper.configure(thingPresetsFilesystem);
+// init things preset list
+global.set('thingsPresetList', dbMapper.getThingsPresetList());
+
+// forward start and stop to things state
+global.onUpdate(async updates => {
+  for (let [name, value] of Object.entries(updates)) {
+    switch (name) {
+      case 'reset': {
+        applyGlobalPreset();
+        break;
+      }
+      case 'activeThingsPreset': {
+        if (value !== null) {
+          await dbMapper.loadThingsPreset(value, things);
+        }
+        break;
+      }
+      case 'saveThingsPreset': {
+        await dbMapper.saveThingsPreset(value, things);
+        global.set({
+          thingsPresetList: dbMapper.getThingsPresetList(),
+          activeThingsPreset: value,
+        });
+        break;
+      }
+      case 'deleteThingsPreset': {
+        await dbMapper.deleteThingsPreset(value);
+        const nextActivePreset = global.get('activeThingsPreset') === value
+          ? null
+          : global.get('activeThingsPreset');
+
+        global.set({
+          thingsPresetList: dbMapper.getThingsPresetList(),
+          activeThingsPreset: nextActivePreset,
+        });
+        break;
+      }
+    }
+  }
+});
 
 server.stateManager.registerUpdateHook('global', updates => {
   if ('introPlayingState' in updates) {

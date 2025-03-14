@@ -101,19 +101,23 @@ simple-layout {
 
   header {
     display: block;
-    height: 38px;
-    line-height: 38px;
+    height: 30px;
+    line-height: 30px;
     background-color: var(--sw-medium-background-color);
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     border-bottom: 1px solid var(--sw-lighter-background-color);
-  }
 
-  header h1 {
-    font-size: 12px;
-    margin: 0;
-    padding-left: 20px;
+    h1 {
+      font-size: 12px;
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    sc-text {
+      border-bottom: 1px solid var(--sw-lighter-background-color);
+    }
   }
 
   #mixing-wrapper {
@@ -125,6 +129,21 @@ simple-layout {
     background-color: #232323;
     z-index: 200;
     display: none;
+  }
+
+  .presets-wrapper {
+    margin-bottom: 20px;
+
+    sc-tab {
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+  }
+
+  .thing-controls {
+    padding: 6px 0;
+    border-bottom: 1px solid #787878;
   }
 }
 

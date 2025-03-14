@@ -5,6 +5,7 @@ import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
 import { launcher, loadConfig } from '@soundworks/helpers/node.js';
 import ClientPluginMixing from '@soundworks/plugin-mixing/client.js';
+import ClientPluginCheckin from '@soundworks/plugin-checkin/client.js';
 import { Scheduler } from '@ircam/sc-scheduling';
 import { AudioContext } from 'node-web-audio-api';
 
@@ -66,14 +67,17 @@ async function bootstrap() {
     audioContext,
   });
 
+  client.pluginManager.register('checkin', ClientPluginCheckin);
+
   await client.start();
 
-  const player = await client.stateManager.create('player', { id: client.id });
+  const thing = await client.stateManager.create('thing', { id: client.id });
   const global = await client.stateManager.attach('global');
 
   const mixing = await client.pluginManager.get('mixing');
+  const checkin =await client.pluginManager.get('checkin');
 
-  // set player label according to hostname
+  // set thing label according to hostname
   const labels = global.get('labels');
   const hostname = os.hostname();
   let isEmulated;
@@ -82,18 +86,19 @@ async function bootstrap() {
     isEmulated = false;
 
     const label = labels[hostname];
-    player.set({ label, hostname });
+    thing.set({ label, hostname });
     mixing.trackState.set({ label });
   } else {
     isEmulated = true;
     // DEV mode
     const hostnames = Object.keys(labels);
-    const index = client.id % hostnames.length;
+    const index = checkin.getIndex();
     const hostname = hostnames[index];
     const label = labels[hostname];
 
-    player.set({ label, hostname });
+    thing.set({ label, hostname });
     mixing.trackState.set({ label });
+
     console.log(`> DEV mode - hostname: ${hostname} - label: ${label}`);
   }
 
@@ -107,11 +112,11 @@ async function bootstrap() {
   feedbackDelay.connect(mix.input);
 
   const wet = audioContext.createGain();
-  wet.gain.value = player.get('applyFx') ? 1 : 0;
+  wet.gain.value = thing.get('applyFx') ? 1 : 0;
   wet.connect(feedbackDelay.input);
 
   const dry = audioContext.createGain();
-  dry.gain.value = player.get('applyFx') ? 0 : 1;
+  dry.gain.value = thing.get('applyFx') ? 0 : 1;
   dry.connect(mix.input);
 
   const synthPlayer = new GranularAudioPlayer(audioContext, scheduler);
@@ -134,14 +139,18 @@ async function bootstrap() {
     }
   }, true);
 
-  player.onUpdate(async updates => {
+  thing.onUpdate(async updates => {
     for (let [key, value] of Object.entries(updates)) {
       switch (key) {
         case 'soundfile': {
-          player.set({ loaded: false });
+          thing.set({ loaded: false });
           const audioBuffer = await audioBufferLoader.load(path.join(process.cwd(), updates.soundfile));
           synthPlayer.buffer = audioBuffer;
-          player.set({ loaded: true });
+          thing.set({ loaded: true });
+
+          if (updates.playOnLoad === true && updates['audio-player:control'] === 'start') {
+            synthPlayer.start();
+          }
           break;
         }
         case 'triggerFile': {
@@ -190,8 +199,8 @@ async function bootstrap() {
     }
   });
 
-  bindStateUpdatesToAudioNode(player, 'audio-player', synthPlayer);
-  bindStateUpdatesToAudioNode(player, 'mix', mix);
+  bindStateUpdatesToAudioNode(thing, 'audio-player', synthPlayer);
+  bindStateUpdatesToAudioNode(thing, 'mix', mix);
 
   bindStateUpdatesToAudioNode(global, 'feedback-delay', feedbackDelay);
 }
