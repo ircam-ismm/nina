@@ -22,11 +22,11 @@ export default {
   },
   ledBaseColor: {
     type: 'string',
-    default: '#ffffff',
+    default: '#1100fa',
   },
   ledIntensityFactor: {
     type: 'float',
-    default: 1,
+    default: 0.1,
     min: 0,
     max: 1,
   },

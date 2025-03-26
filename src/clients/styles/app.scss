@@ -33,6 +33,10 @@ body.loading {
   background-repeat: no-repeat;
 }
 
+body.controller {
+  background-color: #080808
+}
+
 simple-layout {
   display: block;
   min-height: 100vh;
